@@ -1,0 +1,10 @@
+---
+refs:
+  GCEstim:
+    type: 'software'
+    author: Cabral, Jorge
+    year: 2026
+    title: "GCEstim: Regression Coefficients Estimation Using the Generalized Cross Entropy"
+    publisher: "[R package]. Retrieved from https://CRAN.R-project.org/package=GCEstim"
+    url: https://CRAN.R-project.org/package=GCEstim
+...
