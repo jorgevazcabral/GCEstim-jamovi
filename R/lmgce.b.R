@@ -328,6 +328,25 @@ LMGCEClass <- R6::R6Class(
         }
       ))
       
+      if (self$options$supportMethod == "ridge") {
+        
+        summaryTable$addRow(rowKey = "ridgeLambdaRange", values = list(
+          measure = "Ridge lambda range",
+          value = paste0(
+            "[",
+            self$options$ridgeLambdaMin,
+            ", ",
+            self$options$ridgeLambdaMax,
+            "]"
+          )
+        ))
+        
+        summaryTable$addRow(rowKey = "ridgeLambdaN", values = list(
+          measure = "Number of ridge lambda values",
+          value = as.character(self$options$ridgeLambdaN)
+        ))
+      }
+      
       summaryTable$addRow(rowKey = "noiseSupportMethod", values = list(
         measure = "Noise support specification",
         value = if (
