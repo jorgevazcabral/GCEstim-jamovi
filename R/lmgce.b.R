@@ -308,6 +308,26 @@ LMGCEClass <- R6::R6Class(
         value = as.character(nrow(data))
       ))
       
+      summaryTable$addRow(rowKey = "cvNfolds", values = list(
+        measure = "Cross-validation folds",
+        value = as.character(self$options$cvNfolds)
+      ))
+      
+      summaryTable$addRow(rowKey = "errorMeasure", values = list(
+        measure = "Prediction-error measure",
+        value = self$options$errorMeasure
+      ))
+      
+      summaryTable$addRow(rowKey = "errorMeasureWhich", values = list(
+        measure = "Selection rule",
+        value = self$options$errorMeasureWhich
+      ))
+      
+      summaryTable$addRow(rowKey = "seed", values = list(
+        measure = "Seed",
+        value = as.character(self$options$seed)
+      ))
+      
       summaryTable$addRow(rowKey = "method", values = list(
         measure = "Method",
         value = self$options$method
