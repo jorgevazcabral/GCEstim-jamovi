@@ -117,10 +117,15 @@ options:
     default: 20
     min: 2
 
-  - name: supportNoise3sig
-    title: Use 3 sigma noise support
-    type: Bool
-    default: true
+  - name: noiseSupportMethod
+    title: Noise support specification
+    type: List
+    options:
+      - name: sigma3
+        title: 3 sigma
+      - name: maxres
+        title: Maximum absolute ridge residuals
+    default: sigma3
 
   - name: twostepsN
     title: Number of post-GCE reestimations

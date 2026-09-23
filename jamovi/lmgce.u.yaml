@@ -64,6 +64,7 @@ children:
         name: supportSignalVectorMax
         label: Max. signal support range
         format: number
+  
   - type: CollapseBox
     label: Noise support
     collapsed: false
@@ -72,12 +73,30 @@ children:
         name: J
         label: Noise support points
         format: number
+      
       - type: TextBox
         name: weight
         format: number
-      - type: CheckBox
-        name: supportNoise3sig
-        enable: (supportMethod:ridge)
+      
+      - type: Label
+        label: Noise support specification
+        children:
+          - type: RadioButton
+            name: noiseSupportSigma3
+            optionName: noiseSupportMethod
+            optionPart: sigma3
+            label: 3 sigma
+
+          - type: RadioButton
+            name: noiseSupportMaxres
+            optionName: noiseSupportMethod
+            optionPart: maxres
+            label: Maximum absolute ridge residuals
+            enable: (supportMethod:ridge)
+
+      - type: Label
+        label: "Note: standardized-coefficients signal support always uses 3 sigma."
+  
   - type: CollapseBox
     label: Estimation
     collapsed: true

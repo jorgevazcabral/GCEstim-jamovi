@@ -22,7 +22,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             supportSignalVectorMin = 0.3,
             supportSignalVectorMax = 20,
             supportSignalVectorN = 20,
-            supportNoise3sig = TRUE,
+            noiseSupportMethod = "sigma3",
             twostepsN = 1,
             seed = 230676,
             OLS = FALSE,
@@ -135,10 +135,13 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 supportSignalVectorN,
                 default=20,
                 min=2)
-            private$..supportNoise3sig <- jmvcore::OptionBool$new(
-                "supportNoise3sig",
-                supportNoise3sig,
-                default=TRUE)
+            private$..noiseSupportMethod <- jmvcore::OptionList$new(
+                "noiseSupportMethod",
+                noiseSupportMethod,
+                options=list(
+                    "sigma3",
+                    "maxres"),
+                default="sigma3")
             private$..twostepsN <- jmvcore::OptionInteger$new(
                 "twostepsN",
                 twostepsN,
@@ -252,7 +255,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..supportSignalVectorMin)
             self$.addOption(private$..supportSignalVectorMax)
             self$.addOption(private$..supportSignalVectorN)
-            self$.addOption(private$..supportNoise3sig)
+            self$.addOption(private$..noiseSupportMethod)
             self$.addOption(private$..twostepsN)
             self$.addOption(private$..seed)
             self$.addOption(private$..OLS)
@@ -289,7 +292,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         supportSignalVectorMin = function() private$..supportSignalVectorMin$value,
         supportSignalVectorMax = function() private$..supportSignalVectorMax$value,
         supportSignalVectorN = function() private$..supportSignalVectorN$value,
-        supportNoise3sig = function() private$..supportNoise3sig$value,
+        noiseSupportMethod = function() private$..noiseSupportMethod$value,
         twostepsN = function() private$..twostepsN$value,
         seed = function() private$..seed$value,
         OLS = function() private$..OLS$value,
@@ -325,7 +328,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..supportSignalVectorMin = NA,
         ..supportSignalVectorMax = NA,
         ..supportSignalVectorN = NA,
-        ..supportNoise3sig = NA,
+        ..noiseSupportMethod = NA,
         ..twostepsN = NA,
         ..seed = NA,
         ..OLS = NA,
@@ -531,7 +534,7 @@ LMGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param supportSignalVectorMin .
 #' @param supportSignalVectorMax .
 #' @param supportSignalVectorN .
-#' @param supportNoise3sig .
+#' @param noiseSupportMethod .
 #' @param twostepsN .
 #' @param seed .
 #' @param OLS .
@@ -590,7 +593,7 @@ LMGCE <- function(
     supportSignalVectorMin = 0.3,
     supportSignalVectorMax = 20,
     supportSignalVectorN = 20,
-    supportNoise3sig = TRUE,
+    noiseSupportMethod = "sigma3",
     twostepsN = 1,
     seed = 230676,
     OLS = FALSE,
@@ -641,7 +644,7 @@ LMGCE <- function(
         supportSignalVectorMin = supportSignalVectorMin,
         supportSignalVectorMax = supportSignalVectorMax,
         supportSignalVectorN = supportSignalVectorN,
-        supportNoise3sig = supportNoise3sig,
+        noiseSupportMethod = noiseSupportMethod,
         twostepsN = twostepsN,
         seed = seed,
         OLS = OLS,
