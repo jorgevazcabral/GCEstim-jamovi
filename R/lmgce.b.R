@@ -411,9 +411,30 @@ LMGCEClass <- R6::R6Class(
         value = as.character(self$options$twostepsN)
       ))
       
-      summaryTable$addRow(rowKey = "bootstrap", values = list(
-        measure = "Bootstrap",
-        value = ifelse(self$options$bootstrap, "Yes", "No")
+      summaryTable$addRow(rowKey = "ciType", values = list(
+        measure = "Confidence interval type",
+        value = if (self$options$bootstrap) {
+          "Bootstrap"
+        } else {
+          "Asymptotic normal"
+        }
+      ))
+      
+      summaryTable$addRow(rowKey = "ciMethod", values = list(
+        measure = "Confidence interval method",
+        value = if (self$options$bootstrap) {
+          self$options$bootCIMethod
+        } else {
+          "z"
+        }
+      ))
+      
+      summaryTable$addRow(rowKey = "ciLevel", values = list(
+        measure = "Confidence level",
+        value = paste0(
+          100 * self$options$bootConfLevel,
+          "%"
+        )
       ))
       
       if (self$options$bootstrap) {
@@ -424,18 +445,8 @@ LMGCEClass <- R6::R6Class(
         ))
         
         summaryTable$addRow(rowKey = "bootMethod", values = list(
-          measure = "Bootstrap method",
+          measure = "Bootstrap resampling method",
           value = self$options$bootMethod
-        ))
-        
-        summaryTable$addRow(rowKey = "bootCI", values = list(
-          measure = "Bootstrap CI",
-          value = paste0(
-            self$options$bootCIMethod,
-            ", ",
-            100 * self$options$bootConfLevel,
-            "%"
-          )
         ))
       }
       

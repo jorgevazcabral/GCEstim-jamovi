@@ -160,7 +160,7 @@ children:
     children:
       - type: TextBox
         name: bootConfLevel
-        label: Bootstrap confidence level
+        label: Confidence level
         format: number
       
       - type: CheckBox

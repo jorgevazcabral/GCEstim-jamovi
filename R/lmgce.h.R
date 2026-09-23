@@ -32,7 +32,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             OLS = FALSE,
             NormEnt = FALSE,
             bootstrap = FALSE,
-            bootB = 10,
+            bootB = 100,
             bootMethod = "residuals",
             bootCIMethod = "percentile",
             bootConfLevel = 0.95,
@@ -194,7 +194,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..bootB <- jmvcore::OptionInteger$new(
                 "bootB",
                 bootB,
-                default=10)
+                default=100)
             private$..bootMethod <- jmvcore::OptionList$new(
                 "bootMethod",
                 bootMethod,
@@ -662,7 +662,7 @@ LMGCE <- function(
     OLS = FALSE,
     NormEnt = FALSE,
     bootstrap = FALSE,
-    bootB = 10,
+    bootB = 100,
     bootMethod = "residuals",
     bootCIMethod = "percentile",
     bootConfLevel = 0.95,
