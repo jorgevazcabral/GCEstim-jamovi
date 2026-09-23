@@ -140,7 +140,7 @@ options:
     default: false
 
   - name: NormEnt
-    title: Compute Nomalized Entropy
+    title: Compute normalized entropy
     type: Bool
     default: false
     
