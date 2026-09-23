@@ -116,6 +116,16 @@ LMGCEClass <- R6::R6Class(
         }
       }
       
+      if (
+        self$options$supportMethod == "ridge" &&
+        self$options$ridgeLambdaMin >= self$options$ridgeLambdaMax
+      ) {
+        self$results$text$setContent(
+          "<p style='color:red;'><b>Error:</b> The minimum ridge lambda must be smaller than the maximum ridge lambda.</p>"
+        )
+        return()
+      }
+      
       if (self$options$supportSignalVectorMin >= self$options$supportSignalVectorMax) {
         self$results$text$setContent(
           "<p style='color:red;'><b>Error:</b> The minimum signal support range must be smaller than the maximum.</p>"
@@ -176,6 +186,9 @@ LMGCEClass <- R6::R6Class(
           formula = form,
           data = data,
           support.method = self$options$supportMethod,
+          support.method.ridge.lambda.min = self$options$ridgeLambdaMin,
+          support.method.ridge.lambda.max = self$options$ridgeLambdaMax,
+          support.method.ridge.lambda.n = self$options$ridgeLambdaN,
           support.method.ridge.symm =
             (self$options$supportMethod != "ridge" ||
             self$options$ridgeSignalSupport == "symm"),
