@@ -13,6 +13,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             intercept = TRUE,
             caseGLM = "D",
             supportMethod = "standardized",
+            ridgeSignalSupport = "symm",
             M = 3,
             J = 3,
             weight = 0.5,
@@ -79,6 +80,13 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "standardized",
                     "ridge"),
                 default="standardized")
+            private$..ridgeSignalSupport <- jmvcore::OptionList$new(
+                "ridgeSignalSupport",
+                ridgeSignalSupport,
+                options=list(
+                    "symm",
+                    "asymm"),
+                default="symm")
             private$..M <- jmvcore::OptionInteger$new(
                 "M",
                 M,
@@ -246,6 +254,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..intercept)
             self$.addOption(private$..caseGLM)
             self$.addOption(private$..supportMethod)
+            self$.addOption(private$..ridgeSignalSupport)
             self$.addOption(private$..M)
             self$.addOption(private$..J)
             self$.addOption(private$..weight)
@@ -283,6 +292,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         intercept = function() private$..intercept$value,
         caseGLM = function() private$..caseGLM$value,
         supportMethod = function() private$..supportMethod$value,
+        ridgeSignalSupport = function() private$..ridgeSignalSupport$value,
         M = function() private$..M$value,
         J = function() private$..J$value,
         weight = function() private$..weight$value,
@@ -319,6 +329,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..intercept = NA,
         ..caseGLM = NA,
         ..supportMethod = NA,
+        ..ridgeSignalSupport = NA,
         ..M = NA,
         ..J = NA,
         ..weight = NA,
@@ -525,6 +536,7 @@ LMGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param intercept .
 #' @param caseGLM .
 #' @param supportMethod .
+#' @param ridgeSignalSupport .
 #' @param M .
 #' @param J .
 #' @param weight .
@@ -584,6 +596,7 @@ LMGCE <- function(
     intercept = TRUE,
     caseGLM = "D",
     supportMethod = "standardized",
+    ridgeSignalSupport = "symm",
     M = 3,
     J = 3,
     weight = 0.5,
@@ -635,6 +648,7 @@ LMGCE <- function(
         intercept = intercept,
         caseGLM = caseGLM,
         supportMethod = supportMethod,
+        ridgeSignalSupport = ridgeSignalSupport,
         M = M,
         J = J,
         weight = weight,

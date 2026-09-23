@@ -52,6 +52,16 @@ options:
       - ridge
     default: standardized
 
+  - name: ridgeSignalSupport
+    title: Signal support specification
+    type: List
+    options:
+      - name: symm
+        title: Symmetric
+      - name: asymm
+        title: Asymmetric
+    default: symm
+
   - name: M
     title: Signal support points
     type: Integer

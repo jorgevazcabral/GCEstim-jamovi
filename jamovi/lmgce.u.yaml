@@ -39,27 +39,53 @@ children:
               - ordinal
             permitted:
               - factor
+  
   - type: CheckBox
     name: intercept
+  
   - type: ActionButton
     name: run
+  
   - type: CollapseBox
     label: Signal support
     collapsed: false
     children:
       - type: ComboBox
         name: supportMethod
+      
+      - type: Label
+        label: Signal support specification
+        children:
+          - type: RadioButton
+            name: ridgeSignalSupportSymm
+            optionName: ridgeSignalSupport
+            optionPart: symm
+            label: Symmetric
+
+          - type: RadioButton
+            name: ridgeSignalSupportAsymm
+            optionName: ridgeSignalSupport
+            optionPart: asymm
+            label: Asymmetric
+            enable: (supportMethod:ridge)
+
+      - type: Label
+        label: "Note: standardized sinal support is always symmetric."
+        
       - type: TextBox
         name: M
         label: Signal support points
         format: number
+      
       - type: TextBox
         name: supportSignalVectorN
         format: number
+      
       - type: TextBox
         name: supportSignalVectorMin
         label: Min. signal support range
         format: number
+      
       - type: TextBox
         name: supportSignalVectorMax
         label: Max. signal support range
