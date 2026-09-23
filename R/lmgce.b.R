@@ -303,6 +303,18 @@ LMGCEClass <- R6::R6Class(
         value = self$options$supportMethod
       ))
       
+      summaryTable$addRow(rowKey = "signalSupportSpecification", values = list(
+        measure = "Signal support specification",
+        value = if (
+          self$options$supportMethod == "standardized" ||
+          self$options$ridgeSignalSupport == "symm"
+        ) {
+          "Symmetric"
+        } else {
+          "Asymmetric"
+        }
+      ))
+      
       summaryTable$addRow(rowKey = "noiseSupportMethod", values = list(
         measure = "Noise support specification",
         value = if (
