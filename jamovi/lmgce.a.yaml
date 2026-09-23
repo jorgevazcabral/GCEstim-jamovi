@@ -264,6 +264,11 @@ options:
     type: Bool
     default: false
   
+  - name: plotRidge
+    title: Ridge trace
+    type: Bool
+    default: false
+    
   - name: trueCoef
     title: True coefficients
     type: String

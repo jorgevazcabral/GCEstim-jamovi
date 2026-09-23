@@ -44,6 +44,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             plot5 = FALSE,
             plot6 = FALSE,
             plot7 = FALSE,
+            plotRidge = FALSE,
             trueCoef = "", ...) {
 
             super$initialize(
@@ -260,6 +261,10 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "plot7",
                 plot7,
                 default=FALSE)
+            private$..plotRidge <- jmvcore::OptionBool$new(
+                "plotRidge",
+                plotRidge,
+                default=FALSE)
             private$..trueCoef <- jmvcore::OptionString$new(
                 "trueCoef",
                 trueCoef,
@@ -303,6 +308,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..plot5)
             self$.addOption(private$..plot6)
             self$.addOption(private$..plot7)
+            self$.addOption(private$..plotRidge)
             self$.addOption(private$..trueCoef)
         }),
     active = list(
@@ -344,6 +350,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         plot5 = function() private$..plot5$value,
         plot6 = function() private$..plot6$value,
         plot7 = function() private$..plot7$value,
+        plotRidge = function() private$..plotRidge$value,
         trueCoef = function() private$..trueCoef$value),
     private = list(
         ..run = NA,
@@ -384,6 +391,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..plot5 = NA,
         ..plot6 = NA,
         ..plot7 = NA,
+        ..plotRidge = NA,
         ..trueCoef = NA)
 )
 
@@ -594,6 +602,7 @@ LMGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param plot5 .
 #' @param plot6 .
 #' @param plot7 .
+#' @param plotRidge .
 #' @param trueCoef .
 #' @return A results object containing:
 #' \tabular{llllll}{
@@ -657,6 +666,7 @@ LMGCE <- function(
     plot5 = FALSE,
     plot6 = FALSE,
     plot7 = FALSE,
+    plotRidge = FALSE,
     trueCoef = "") {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
@@ -712,6 +722,7 @@ LMGCE <- function(
         plot5 = plot5,
         plot6 = plot6,
         plot7 = plot7,
+        plotRidge = plotRidge,
         trueCoef = trueCoef)
 
     analysis <- LMGCEClass$new(
