@@ -1,0 +1,230 @@
+---
+name:  TASWGCE
+title: TASW-GCE Linear Model
+menuGroup: GCEstim
+menuSubgroup: Regression
+menuTitle: TASW-GCE
+version: '1.0.0'
+jas: '1.2'
+
+options:
+  - name: run
+    title: Run model
+    type: Action
+    
+  - name: data
+    type: Data
+
+  - name: dep
+    title: Dependent Variable
+    type: Variable
+
+  - name: covs
+    title: Covariates
+    type: Variables
+
+  - name: factors
+    title: Factors
+    type: Variables
+    
+  - name: intercept
+    title: Include intercept
+    type: Bool
+    default: true
+  
+  - name: caseGLM
+    title: General linear model case
+    type: List
+    options:
+      - title: Data
+        name: D
+      - title: Moment
+        name: M
+      - title: Normed moment
+        name: NM
+    default: D
+
+  - name: M
+    title: Signal support points
+    type: String
+    default: '3, 5, 7, 9'
+
+  - name: J
+    title: Noise support points
+    type: String
+    default: '3, 5, 7, 9'
+
+  - name: weight
+    title: Noise weight values
+    type: String
+    default: '0.1, 0.3, 0.5, 0.7, 0.9'
+    
+  - name: cvNfolds
+    title: Number of CV folds
+    type: Integer
+    default: 5
+    min: 2
+
+  - name: cvTableRows
+    title: Number of CV results to display
+    type: Integer
+    default: 10
+    min: 1
+
+  - name: errorMeasure
+    title: Error measure
+    type: List
+    options:
+      - RMSE
+      - MSE
+      - MAE
+      - MAPE
+      - sMAPE
+      - MASE
+    default: RMSE
+  
+  - name: errorMeasureWhich
+    title: Error selection rule
+    type: List
+    options:
+      - 1se
+      - min
+    default: 1se
+  
+  - name: supportSignalVectorMin
+    title: Minimum signal support range
+    type: Number
+    default: 0.3
+    min: 0.01
+  
+  - name: supportSignalVectorMax
+    title: Maximum signal support range
+    type: Number
+    default: 20
+    min: 0.01
+
+  - name: supportSignalVectorN
+    title: Number of signal support spaces
+    type: Integer
+    default: 5
+    min: 2
+
+  - name: twostepsN
+    title: Number of post-GCE reestimations
+    type: Integer
+    default: 1
+    min: 0
+
+  - name: seed
+    title: Seed
+    type: Integer
+    default: 230676
+    min: 1
+    
+  - name: OLS
+    title: Include OLS
+    type: Bool
+    default: false
+
+  - name: NormEnt
+    title: Compute normalized entropy
+    type: Bool
+    default: false
+    
+  - name: bootstrap
+    title: Bootstrap
+    type: Bool
+    default: false
+  
+  - name: bootB
+    title: Number of bootstrap samples
+    type: Integer
+    default: 100
+  
+  - name: bootMethod
+    title: Bootstrap method
+    type: List
+    options:
+      - residuals
+      - cases
+      - wild
+    default: residuals
+  
+  - name: bootCIMethod
+    title: Bootstrap confidence interval method
+    type: List
+    options:
+      - percentile
+      - basic
+    default: percentile
+  
+  - name: bootConfLevel
+    title: Confidence level
+    type: Number
+    default: 0.95
+    min: 0.50
+    max: 0.99
+  
+  - name: method
+    title: Optimization method
+    type: List
+    options:
+      - dual.BFGS
+      - dual.lbfgsb3c
+      - dual.L-BFGS-B
+      - dual.lbfgs
+      - dual.CG
+      - dual.Rcgmin
+      - dual.bobyqa
+      - dual.newuoa
+      - dual.nlminb
+      - dual.nlm
+      - primal.solnl
+      - primal.solnp
+    default: dual.BFGS
+  
+  - name: plot1
+    title: Estimates and confidence intervals
+    type: Bool
+    default: false
+
+  - name: plot2
+    title: Supports vs prediction error
+    type: Bool
+    default: true
+
+  - name: plot3
+    title: Supports vs estimates
+    type: Bool
+    default: false
+
+  - name: plot4
+    title: Supports vs normalized entropy
+    type: Bool
+    default: false
+
+  - name: plot5
+    title: Supports vs precision error
+    type: Bool
+    default: false
+
+  - name: plot6
+    title: GCE reestimation vs prediction error
+    type: Bool
+    default: false
+
+  - name: plot7
+    title: GCE reestimation vs precision error
+    type: Bool
+    default: false
+  
+  - name: plotCV
+    title: Cross-validation error by support combination
+    type: Bool
+    default: true
+    
+  - name: trueCoef
+    title: True coefficients
+    type: String
+    default: ''
+...
