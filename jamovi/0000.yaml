@@ -21,6 +21,13 @@ analyses:
     menuGroup: GCEstim
     menuTitle: Linear GCE
     menuSubgroup: Regression
+  - title: TARW-GCE Linear Model
+    name: TARWGCE
+    ns: GCEstimjmv
+    category: analyses
+    menuGroup: GCEstim
+    menuTitle: TARW-GCE
+    menuSubgroup: Regression
 usesNative: true
 minApp: 1.0.8
 
