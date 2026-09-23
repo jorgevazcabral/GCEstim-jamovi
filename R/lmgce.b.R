@@ -63,13 +63,41 @@ LMGCEClass <- R6::R6Class(
       
       if (nrow(data) < 3) {
         self$results$text$setContent(
-          "<p>Not enough complete cases to estimate the model.</p>"
+          "<p style='color:red;'><b>Error:</b> Not enough complete cases to estimate the model.</p>"
         )
         return()
       }
       
       for (f in factors) {
-        data[[f]] <- as.factor(data[[f]])
+        data[[f]] <- droplevels(as.factor(data[[f]]))
+      }
+      
+      constantCovs <- covs[
+        vapply(
+          data[, covs, drop = FALSE],
+          function(x) length(unique(x)) < 2,
+          logical(1)
+        )
+      ]
+      
+      constantFactors <- factors[
+        vapply(
+          data[, factors, drop = FALSE],
+          function(x) nlevels(x) < 2,
+          logical(1)
+        )
+      ]
+      
+      constantVars <- c(constantCovs, constantFactors)
+      
+      if (length(constantVars) > 0) {
+        self$results$text$setContent(
+          sprintf(
+            "<p style='color:red;'><b>Error:</b> The following predictors have no variation: %s.</p>",
+            paste(constantVars, collapse = ", ")
+          )
+        )
+        return()
       }
       
       terms <- c(covs, factors)
