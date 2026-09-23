@@ -176,6 +176,9 @@ LMGCEClass <- R6::R6Class(
           formula = form,
           data = data,
           support.method = self$options$supportMethod,
+          support.method.ridge.maxresid =
+            (self$options$supportMethod == "ridge" &&
+            self$options$noiseSupportMethod == "maxres"),
           support.signal.vector.n = self$options$supportSignalVectorN,
           support.signal.vector.min = self$options$supportSignalVectorMin,
           support.signal.vector.max = self$options$supportSignalVectorMax,
