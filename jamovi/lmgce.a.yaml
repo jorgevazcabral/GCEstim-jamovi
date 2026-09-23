@@ -142,7 +142,7 @@ options:
   - name: supportSignalVectorN
     title: Number of signal support spaces
     type: Integer
-    default: 20
+    default: 5
     min: 2
 
   - name: noiseSupportMethod
@@ -232,7 +232,7 @@ options:
   - name: plot1
     title: Estimates and confidence intervals
     type: Bool
-    default: true
+    default: false
 
   - name: plot2
     title: Supports vs prediction error
@@ -267,7 +267,7 @@ options:
   - name: plotRidge
     title: Ridge trace
     type: Bool
-    default: false
+    default: true
     
   - name: trueCoef
     title: True coefficients

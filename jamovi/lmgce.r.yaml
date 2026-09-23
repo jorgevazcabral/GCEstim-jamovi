@@ -25,6 +25,12 @@ items:
         title: Value
         type: text
 
+  - name: plotRidge
+    title: Ridge trace
+    type: Image
+    renderFun: .plotRidge
+    visible: (plotRidge && supportMethod == 'ridge')  
+    
   - name: coefficients
     title: Coefficients
     type: Table
@@ -121,11 +127,5 @@ items:
     type: Image
     renderFun: .plot7
     visible: (plot7)
-    
-  - name: plotRidge
-    title: Ridge trace
-    type: Image
-    renderFun: .plotRidge
-    visible: (plotRidge && supportMethod == 'ridge')  
 ...
   

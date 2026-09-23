@@ -25,7 +25,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             errorMeasureWhich = "1se",
             supportSignalVectorMin = 0.3,
             supportSignalVectorMax = 20,
-            supportSignalVectorN = 20,
+            supportSignalVectorN = 5,
             noiseSupportMethod = "sigma3",
             twostepsN = 1,
             seed = 230676,
@@ -37,14 +37,14 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             bootCIMethod = "percentile",
             bootConfLevel = 0.95,
             method = "dual.BFGS",
-            plot1 = TRUE,
+            plot1 = FALSE,
             plot2 = TRUE,
             plot3 = TRUE,
             plot4 = FALSE,
             plot5 = FALSE,
             plot6 = FALSE,
             plot7 = FALSE,
-            plotRidge = FALSE,
+            plotRidge = TRUE,
             trueCoef = "", ...) {
 
             super$initialize(
@@ -160,7 +160,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..supportSignalVectorN <- jmvcore::OptionInteger$new(
                 "supportSignalVectorN",
                 supportSignalVectorN,
-                default=20,
+                default=5,
                 min=2)
             private$..noiseSupportMethod <- jmvcore::OptionList$new(
                 "noiseSupportMethod",
@@ -236,7 +236,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..plot1 <- jmvcore::OptionBool$new(
                 "plot1",
                 plot1,
-                default=TRUE)
+                default=FALSE)
             private$..plot2 <- jmvcore::OptionBool$new(
                 "plot2",
                 plot2,
@@ -264,7 +264,7 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..plotRidge <- jmvcore::OptionBool$new(
                 "plotRidge",
                 plotRidge,
-                default=FALSE)
+                default=TRUE)
             private$..trueCoef <- jmvcore::OptionString$new(
                 "trueCoef",
                 trueCoef,
@@ -402,6 +402,7 @@ LMGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         text = function() private$.items[["text"]],
         reference = function() private$.items[["reference"]],
         modelSummary = function() private$.items[["modelSummary"]],
+        plotRidge = function() private$.items[["plotRidge"]],
         coefficients = function() private$.items[["coefficients"]],
         plot1 = function() private$.items[["plot1"]],
         plot2 = function() private$.items[["plot2"]],
@@ -409,8 +410,7 @@ LMGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         plot4 = function() private$.items[["plot4"]],
         plot5 = function() private$.items[["plot5"]],
         plot6 = function() private$.items[["plot6"]],
-        plot7 = function() private$.items[["plot7"]],
-        plotRidge = function() private$.items[["plotRidge"]]),
+        plot7 = function() private$.items[["plot7"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -441,6 +441,12 @@ LMGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `name`="value", 
                         `title`="Value", 
                         `type`="text"))))
+            self$add(jmvcore::Image$new(
+                options=options,
+                name="plotRidge",
+                title="Ridge trace",
+                renderFun=".plotRidge",
+                visible="(plotRidge && supportMethod == 'ridge')"))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="coefficients",
@@ -538,13 +544,7 @@ LMGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="plot7",
                 title="GCE reestimation vs precision error",
                 renderFun=".plot7",
-                visible="(plot7)"))
-            self$add(jmvcore::Image$new(
-                options=options,
-                name="plotRidge",
-                title="Ridge trace",
-                renderFun=".plotRidge",
-                visible="(plotRidge && supportMethod == 'ridge')"))}))
+                visible="(plot7)"))}))
 
 LMGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "LMGCEBase",
@@ -616,6 +616,7 @@ LMGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$reference} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$modelSummary} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$plotRidge} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$coefficients} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$plot1} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plot2} \tab \tab \tab \tab \tab an image \cr
@@ -624,7 +625,6 @@ LMGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$plot5} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plot6} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plot7} \tab \tab \tab \tab \tab an image \cr
-#'   \code{results$plotRidge} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
@@ -655,7 +655,7 @@ LMGCE <- function(
     errorMeasureWhich = "1se",
     supportSignalVectorMin = 0.3,
     supportSignalVectorMax = 20,
-    supportSignalVectorN = 20,
+    supportSignalVectorN = 5,
     noiseSupportMethod = "sigma3",
     twostepsN = 1,
     seed = 230676,
@@ -667,14 +667,14 @@ LMGCE <- function(
     bootCIMethod = "percentile",
     bootConfLevel = 0.95,
     method = "dual.BFGS",
-    plot1 = TRUE,
+    plot1 = FALSE,
     plot2 = TRUE,
     plot3 = TRUE,
     plot4 = FALSE,
     plot5 = FALSE,
     plot6 = FALSE,
     plot7 = FALSE,
-    plotRidge = FALSE,
+    plotRidge = TRUE,
     trueCoef = "") {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
