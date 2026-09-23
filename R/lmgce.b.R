@@ -300,6 +300,18 @@ LMGCEClass <- R6::R6Class(
         value = self$options$supportMethod
       ))
       
+      summaryTable$addRow(rowKey = "noiseSupportMethod", values = list(
+        measure = "Noise support specification",
+        value = if (
+          self$options$supportMethod == "standardized" ||
+          self$options$noiseSupportMethod == "sigma3"
+        ) {
+          "3 sigma"
+        } else {
+          "Maximum absolute ridge residuals"
+        }
+      ))
+      
       summaryTable$addRow(rowKey = "supportSignalVectorN", values = list(
         measure = "Number of support spaces",
         value = as.character(self$options$supportSignalVectorN)
