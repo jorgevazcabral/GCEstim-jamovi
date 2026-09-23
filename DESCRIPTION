@@ -1,12 +1,27 @@
 Package: GCEstimjmv
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.0.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Title: Entropy-Based Linear Regression for jamovi
+Version: 0.1.0
+Authors@R: person(
+    given = "Jorge",
+    family = "Cabral",
+    email = "jorgecabral@ua.pt",
+    role = c("aut", "cre"),
+    comment = c(
+        ORCID = "0000-0001-5721-4550",
+        affiliation = "Department of Mathematics, University of Aveiro"
+    )
+  )
+Description: Provides a jamovi interface for generalized maximum-entropy
+    and generalized cross-entropy linear regression using the GCEstim R
+    package. The module supports standardized-coefficient- and ridge-informed
+    support construction, cross-validation, two-stage re-estimation,
+    asymptotic and bootstrap confidence intervals, and diagnostic plots.
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
-Imports: jmvcore (>= 0.8.5), R6
+Imports:
+    jmvcore (>= 0.8.5),
+    R6
+URL: https://github.com/jorgevazcabral/GCEstim-jamovi
+BugReports: https://github.com/jorgevazcabral/GCEstim-jamovi/issues
