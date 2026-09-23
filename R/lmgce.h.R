@@ -409,7 +409,8 @@ LMGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         plot4 = function() private$.items[["plot4"]],
         plot5 = function() private$.items[["plot5"]],
         plot6 = function() private$.items[["plot6"]],
-        plot7 = function() private$.items[["plot7"]]),
+        plot7 = function() private$.items[["plot7"]],
+        plotRidge = function() private$.items[["plotRidge"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -537,7 +538,13 @@ LMGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="plot7",
                 title="GCE reestimation vs precision error",
                 renderFun=".plot7",
-                visible="(plot7)"))}))
+                visible="(plot7)"))
+            self$add(jmvcore::Image$new(
+                options=options,
+                name="plotRidge",
+                title="Ridge trace",
+                renderFun=".plotRidge",
+                visible="(plotRidge && supportMethod == 'ridge')"))}))
 
 LMGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "LMGCEBase",
@@ -617,6 +624,7 @@ LMGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$plot5} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plot6} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plot7} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$plotRidge} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:

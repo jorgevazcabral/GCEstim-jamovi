@@ -121,5 +121,11 @@ items:
     type: Image
     renderFun: .plot7
     visible: (plot7)
+    
+  - name: plotRidge
+    title: Ridge trace
+    type: Image
+    renderFun: .plotRidge
+    visible: (plotRidge && supportMethod == 'ridge')  
 ...
   

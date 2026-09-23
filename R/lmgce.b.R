@@ -40,7 +40,9 @@ LMGCEClass <- R6::R6Class(
         self$options$plot4,
         self$options$plot5,
         self$options$plot6,
-        self$options$plot7
+        self$options$plot7,
+        self$options$plotRidge &&
+          self$options$supportMethod == "ridge"
       )
       
       if (sum(selectedPlots) > 3) {
@@ -497,6 +499,33 @@ LMGCEClass <- R6::R6Class(
                                      coef = trueCoef,
                                      OLS = self$options$OLS),
                                 error = function(e) NULL)
+      
+      if (
+        self$options$plotRidge &&
+        self$options$supportMethod == "ridge"
+      ) {
+        plots$plotRidge <- tryCatch(
+          {
+            ridgeFit <- GCEstim::ridgetrace(
+              formula = form,
+              data = data,
+              lambda.min = self$options$ridgeLambdaMin,
+              lambda.max = self$options$ridgeLambdaMax,
+              lambda.n = self$options$ridgeLambdaN,
+              errormeasure = self$options$errorMeasure,
+              cv = FALSE,
+              seed = self$options$seed
+            )
+            
+            plot(
+              ridgeFit,
+              log = TRUE,
+              range = TRUE
+            )
+          },
+          error = function(e) NULL
+        )
+      }
 
       if (self$options$plot1)
         self$results$plot1$setState(list(p = plots$plot1))
@@ -518,6 +547,14 @@ LMGCEClass <- R6::R6Class(
 
       if (self$options$plot7)
         self$results$plot7$setState(list(p = plots$plot7))
+      
+      if (
+        self$options$plotRidge &&
+        self$options$supportMethod == "ridge"
+      )
+        self$results$plotRidge$setState(
+          list(p = plots$plotRidge)
+        )
       
       ## Complete
       
@@ -563,6 +600,7 @@ LMGCEClass <- R6::R6Class(
     .plot5 = function(image, ggtheme, theme) private$.printPlot(image),
     .plot6 = function(image, ggtheme, theme) private$.printPlot(image),
     .plot7 = function(image, ggtheme, theme) private$.printPlot(image),
+    .plotRidge = function(image, ggtheme, theme) private$.printPlot(image),
 
     .printPlot = function(image) {
 
