@@ -14,6 +14,9 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             caseGLM = "D",
             supportMethod = "standardized",
             ridgeSignalSupport = "symm",
+            ridgeLambdaMin = 0.001,
+            ridgeLambdaMax = 1000,
+            ridgeLambdaN = 100,
             M = 3,
             J = 3,
             weight = 0.5,
@@ -87,6 +90,21 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "symm",
                     "asymm"),
                 default="symm")
+            private$..ridgeLambdaMin <- jmvcore::OptionNumber$new(
+                "ridgeLambdaMin",
+                ridgeLambdaMin,
+                default=0.001,
+                min=1e-12)
+            private$..ridgeLambdaMax <- jmvcore::OptionNumber$new(
+                "ridgeLambdaMax",
+                ridgeLambdaMax,
+                default=1000,
+                min=1e-12)
+            private$..ridgeLambdaN <- jmvcore::OptionInteger$new(
+                "ridgeLambdaN",
+                ridgeLambdaN,
+                default=100,
+                min=2)
             private$..M <- jmvcore::OptionInteger$new(
                 "M",
                 M,
@@ -255,6 +273,9 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..caseGLM)
             self$.addOption(private$..supportMethod)
             self$.addOption(private$..ridgeSignalSupport)
+            self$.addOption(private$..ridgeLambdaMin)
+            self$.addOption(private$..ridgeLambdaMax)
+            self$.addOption(private$..ridgeLambdaN)
             self$.addOption(private$..M)
             self$.addOption(private$..J)
             self$.addOption(private$..weight)
@@ -293,6 +314,9 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         caseGLM = function() private$..caseGLM$value,
         supportMethod = function() private$..supportMethod$value,
         ridgeSignalSupport = function() private$..ridgeSignalSupport$value,
+        ridgeLambdaMin = function() private$..ridgeLambdaMin$value,
+        ridgeLambdaMax = function() private$..ridgeLambdaMax$value,
+        ridgeLambdaN = function() private$..ridgeLambdaN$value,
         M = function() private$..M$value,
         J = function() private$..J$value,
         weight = function() private$..weight$value,
@@ -330,6 +354,9 @@ LMGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..caseGLM = NA,
         ..supportMethod = NA,
         ..ridgeSignalSupport = NA,
+        ..ridgeLambdaMin = NA,
+        ..ridgeLambdaMax = NA,
+        ..ridgeLambdaN = NA,
         ..M = NA,
         ..J = NA,
         ..weight = NA,
@@ -537,6 +564,9 @@ LMGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param caseGLM .
 #' @param supportMethod .
 #' @param ridgeSignalSupport .
+#' @param ridgeLambdaMin .
+#' @param ridgeLambdaMax .
+#' @param ridgeLambdaN .
 #' @param M .
 #' @param J .
 #' @param weight .
@@ -597,6 +627,9 @@ LMGCE <- function(
     caseGLM = "D",
     supportMethod = "standardized",
     ridgeSignalSupport = "symm",
+    ridgeLambdaMin = 0.001,
+    ridgeLambdaMax = 1000,
+    ridgeLambdaN = 100,
     M = 3,
     J = 3,
     weight = 0.5,
@@ -649,6 +682,9 @@ LMGCE <- function(
         caseGLM = caseGLM,
         supportMethod = supportMethod,
         ridgeSignalSupport = ridgeSignalSupport,
+        ridgeLambdaMin = ridgeLambdaMin,
+        ridgeLambdaMax = ridgeLambdaMax,
+        ridgeLambdaN = ridgeLambdaN,
         M = M,
         J = J,
         weight = weight,

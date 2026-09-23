@@ -71,6 +71,27 @@ children:
 
       - type: Label
         label: "Note: standardized sinal support is always symmetric."
+      
+      - type: Label
+        label: Ridge trace grid
+        children:
+          - type: TextBox
+            name: ridgeLambdaMin
+            label: Minimum lambda
+            format: number
+            enable: (supportMethod:ridge)
+
+          - type: TextBox
+            name: ridgeLambdaMax
+            label: Maximum lambda
+            format: number
+            enable: (supportMethod:ridge)
+
+          - type: TextBox
+            name: ridgeLambdaN
+            label: Number of lambda values
+            format: number
+            enable: (supportMethod:ridge)
         
       - type: TextBox
         name: M
