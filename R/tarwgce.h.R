@@ -448,7 +448,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="plotCV",
                 title="Cross-validation error by support combination",
                 renderFun=".plotCV",
-                visible="(plotCV)"))
+                visible=FALSE))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="cvResults",

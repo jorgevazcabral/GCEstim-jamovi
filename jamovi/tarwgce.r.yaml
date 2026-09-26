@@ -29,7 +29,7 @@ items:
     title: Cross-validation error by support combination
     type: Image
     renderFun: .plotCV
-    visible: (plotCV)
+    visible: false
   
   - name: cvResults
     title: Cross-validation results

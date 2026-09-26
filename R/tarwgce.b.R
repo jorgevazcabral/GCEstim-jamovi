@@ -187,6 +187,12 @@ TARWGCEClass <- R6::R6Class(
       Jvalues <- unique(parseNumericVector(self$options$J))
       weightValues <- unique(parseNumericVector(self$options$weight))
       
+      cvPlotAvailable <- length(Mvalues) > 1L
+      
+      self$results$plotCV$setVisible(
+        isTRUE(self$options$plotCV) && cvPlotAvailable
+      )
+      
       if (
         length(Mvalues) == 0 ||
         anyNA(Mvalues) ||
@@ -633,7 +639,7 @@ TARWGCEClass <- R6::R6Class(
                                      OLS = self$options$OLS),
                                 error = function(e) NULL)
       
-      if (self$options$plotCV) {
+      if (isTRUE(self$options$plotCV) && cvPlotAvailable) {
         plots$plotCV <- tryCatch(
           plot(
             fit,
@@ -690,7 +696,7 @@ TARWGCEClass <- R6::R6Class(
       if (self$options$plot7)
         self$results$plot7$setState(list(p = plots$plot7))
       
-      if (self$options$plotCV) 
+      if (isTRUE(self$options$plotCV) && cvPlotAvailable)
         self$results$plotCV$setState(list(p = plots$plotCV))
       
       if (self$options$plotRidge)
