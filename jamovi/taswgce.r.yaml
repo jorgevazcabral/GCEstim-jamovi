@@ -132,36 +132,36 @@ items:
     title: Supports vs prediction error
     type: Image
     renderFun: .plot2
-    visible: (plot2)
+    visible: false
 
   - name: plot3
     title: Supports vs estimates
     type: Image
     renderFun: .plot3
-    visible: (plot3)
+    visible: false
 
   - name: plot4
     title: Supports vs normalized entropy
     type: Image
     renderFun: .plot4
-    visible: (plot4)
+    visible: false
 
   - name: plot5
     title: Supports vs precision error
     type: Image
     renderFun: .plot5
-    visible: (plot5)
+    visible: false
 
   - name: plot6
     title: GCE reestimation vs prediction error
     type: Image
     renderFun: .plot6
-    visible: (plot6)
+    visible: false
 
   - name: plot7
     title: GCE reestimation vs precision error
     type: Image
     renderFun: .plot7
-    visible: (plot7)
+    visible: false
 ...
   

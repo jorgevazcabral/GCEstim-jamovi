@@ -107,8 +107,14 @@ options:
     title: Number of signal support spaces
     type: Integer
     default: 5
-    min: 2
+    min: 1
 
+  - name: supportSignal
+    title: Signal support value
+    type: Number
+    default: 1
+    min: 0.000001
+  
   - name: twostepsN
     title: Number of post-GCE reestimations
     type: Integer

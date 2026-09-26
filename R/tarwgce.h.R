@@ -26,6 +26,7 @@ TARWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             supportSignalVectorMin = 0.3,
             supportSignalVectorMax = 20,
             supportSignalVectorN = 5,
+            supportSignal = 1,
             noiseSupportMethod = "sigma3",
             twostepsN = 1,
             seed = 230676,
@@ -154,7 +155,12 @@ TARWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "supportSignalVectorN",
                 supportSignalVectorN,
                 default=5,
-                min=2)
+                min=1)
+            private$..supportSignal <- jmvcore::OptionNumber$new(
+                "supportSignal",
+                supportSignal,
+                default=1,
+                min=0.000001)
             private$..noiseSupportMethod <- jmvcore::OptionList$new(
                 "noiseSupportMethod",
                 noiseSupportMethod,
@@ -287,6 +293,7 @@ TARWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..supportSignalVectorMin)
             self$.addOption(private$..supportSignalVectorMax)
             self$.addOption(private$..supportSignalVectorN)
+            self$.addOption(private$..supportSignal)
             self$.addOption(private$..noiseSupportMethod)
             self$.addOption(private$..twostepsN)
             self$.addOption(private$..seed)
@@ -330,6 +337,7 @@ TARWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         supportSignalVectorMin = function() private$..supportSignalVectorMin$value,
         supportSignalVectorMax = function() private$..supportSignalVectorMax$value,
         supportSignalVectorN = function() private$..supportSignalVectorN$value,
+        supportSignal = function() private$..supportSignal$value,
         noiseSupportMethod = function() private$..noiseSupportMethod$value,
         twostepsN = function() private$..twostepsN$value,
         seed = function() private$..seed$value,
@@ -372,6 +380,7 @@ TARWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..supportSignalVectorMin = NA,
         ..supportSignalVectorMax = NA,
         ..supportSignalVectorN = NA,
+        ..supportSignal = NA,
         ..noiseSupportMethod = NA,
         ..twostepsN = NA,
         ..seed = NA,
@@ -559,37 +568,37 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="plot2",
                 title="Supports vs prediction error",
                 renderFun=".plot2",
-                visible="(plot2)"))
+                visible=FALSE))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot3",
                 title="Supports vs estimates",
                 renderFun=".plot3",
-                visible="(plot3)"))
+                visible=FALSE))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot4",
                 title="Supports vs normalized entropy",
                 renderFun=".plot4",
-                visible="(plot4)"))
+                visible=FALSE))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot5",
                 title="Supports vs precision error",
                 renderFun=".plot5",
-                visible="(plot5)"))
+                visible=FALSE))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot6",
                 title="GCE reestimation vs prediction error",
                 renderFun=".plot6",
-                visible="(plot6)"))
+                visible=FALSE))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot7",
                 title="GCE reestimation vs precision error",
                 renderFun=".plot7",
-                visible="(plot7)"))}))
+                visible=FALSE))}))
 
 TARWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "TARWGCEBase",
@@ -636,6 +645,7 @@ TARWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param supportSignalVectorMin .
 #' @param supportSignalVectorMax .
 #' @param supportSignalVectorN .
+#' @param supportSignal .
 #' @param noiseSupportMethod .
 #' @param twostepsN .
 #' @param seed .
@@ -704,6 +714,7 @@ TARWGCE <- function(
     supportSignalVectorMin = 0.3,
     supportSignalVectorMax = 20,
     supportSignalVectorN = 5,
+    supportSignal = 1,
     noiseSupportMethod = "sigma3",
     twostepsN = 1,
     seed = 230676,
@@ -761,6 +772,7 @@ TARWGCE <- function(
         supportSignalVectorMin = supportSignalVectorMin,
         supportSignalVectorMax = supportSignalVectorMax,
         supportSignalVectorN = supportSignalVectorN,
+        supportSignal = supportSignal,
         noiseSupportMethod = noiseSupportMethod,
         twostepsN = twostepsN,
         seed = seed,

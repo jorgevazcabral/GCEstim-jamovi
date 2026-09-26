@@ -22,6 +22,7 @@ TASWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             supportSignalVectorMin = 0.3,
             supportSignalVectorMax = 20,
             supportSignalVectorN = 5,
+            supportSignal = 1,
             twostepsN = 1,
             seed = 230676,
             OLS = FALSE,
@@ -126,7 +127,12 @@ TASWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "supportSignalVectorN",
                 supportSignalVectorN,
                 default=5,
-                min=2)
+                min=1)
+            private$..supportSignal <- jmvcore::OptionNumber$new(
+                "supportSignal",
+                supportSignal,
+                default=1,
+                min=0.000001)
             private$..twostepsN <- jmvcore::OptionInteger$new(
                 "twostepsN",
                 twostepsN,
@@ -244,6 +250,7 @@ TASWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..supportSignalVectorMin)
             self$.addOption(private$..supportSignalVectorMax)
             self$.addOption(private$..supportSignalVectorN)
+            self$.addOption(private$..supportSignal)
             self$.addOption(private$..twostepsN)
             self$.addOption(private$..seed)
             self$.addOption(private$..OLS)
@@ -281,6 +288,7 @@ TASWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         supportSignalVectorMin = function() private$..supportSignalVectorMin$value,
         supportSignalVectorMax = function() private$..supportSignalVectorMax$value,
         supportSignalVectorN = function() private$..supportSignalVectorN$value,
+        supportSignal = function() private$..supportSignal$value,
         twostepsN = function() private$..twostepsN$value,
         seed = function() private$..seed$value,
         OLS = function() private$..OLS$value,
@@ -317,6 +325,7 @@ TASWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..supportSignalVectorMin = NA,
         ..supportSignalVectorMax = NA,
         ..supportSignalVectorN = NA,
+        ..supportSignal = NA,
         ..twostepsN = NA,
         ..seed = NA,
         ..OLS = NA,
@@ -495,37 +504,37 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="plot2",
                 title="Supports vs prediction error",
                 renderFun=".plot2",
-                visible="(plot2)"))
+                visible=FALSE))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot3",
                 title="Supports vs estimates",
                 renderFun=".plot3",
-                visible="(plot3)"))
+                visible=FALSE))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot4",
                 title="Supports vs normalized entropy",
                 renderFun=".plot4",
-                visible="(plot4)"))
+                visible=FALSE))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot5",
                 title="Supports vs precision error",
                 renderFun=".plot5",
-                visible="(plot5)"))
+                visible=FALSE))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot6",
                 title="GCE reestimation vs prediction error",
                 renderFun=".plot6",
-                visible="(plot6)"))
+                visible=FALSE))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot7",
                 title="GCE reestimation vs precision error",
                 renderFun=".plot7",
-                visible="(plot7)"))}))
+                visible=FALSE))}))
 
 TASWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "TASWGCEBase",
@@ -568,6 +577,7 @@ TASWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param supportSignalVectorMin .
 #' @param supportSignalVectorMax .
 #' @param supportSignalVectorN .
+#' @param supportSignal .
 #' @param twostepsN .
 #' @param seed .
 #' @param OLS .
@@ -629,6 +639,7 @@ TASWGCE <- function(
     supportSignalVectorMin = 0.3,
     supportSignalVectorMax = 20,
     supportSignalVectorN = 5,
+    supportSignal = 1,
     twostepsN = 1,
     seed = 230676,
     OLS = FALSE,
@@ -680,6 +691,7 @@ TASWGCE <- function(
         supportSignalVectorMin = supportSignalVectorMin,
         supportSignalVectorMax = supportSignalVectorMax,
         supportSignalVectorN = supportSignalVectorN,
+        supportSignal = supportSignal,
         twostepsN = twostepsN,
         seed = seed,
         OLS = OLS,

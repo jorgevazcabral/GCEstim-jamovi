@@ -65,6 +65,11 @@ children:
         format: number
       
       - type: TextBox
+        name: supportSignal
+        label: Signal support value
+        format: number
+      
+      - type: TextBox
         name: supportSignalVectorMin
         label: Min. signal support range
         format: number

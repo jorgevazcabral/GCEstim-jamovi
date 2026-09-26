@@ -5,11 +5,6 @@ TASWGCEClass <- R6::R6Class(
     
     .run = function() {
       
-      # .libPaths(c(
-      #   "C:/Users/Utilizador/AppData/Local/R/win-library/4.5",
-      #   .libPaths()
-      # ))
-      
       .libPaths(c(
             "C:/Users/jorge/AppData/Local/R/win-library/4.5",
             .libPaths()
@@ -33,15 +28,45 @@ TASWGCEClass <- R6::R6Class(
         return()
       }
       
+      supportGridAvailable <-
+        self$options$supportSignalVectorN > 1L
+      
+      reestimationPlotsAvailable <-
+        self$options$twostepsN > 0L
+      
       selectedPlots <- c(
         self$options$plot1,
-        self$options$plot2,
-        self$options$plot3,
-        self$options$plot4,
-        self$options$plot5,
-        self$options$plot6,
-        self$options$plot7,
+        self$options$plot2 && supportGridAvailable,
+        self$options$plot3 && supportGridAvailable,
+        self$options$plot4 && supportGridAvailable,
+        self$options$plot5 && supportGridAvailable,
+        self$options$plot6 && reestimationPlotsAvailable,
+        self$options$plot7 && reestimationPlotsAvailable,
         self$options$plotCV
+      )
+      
+      self$results$plot2$setVisible(
+        isTRUE(self$options$plot2) && supportGridAvailable
+      )
+      
+      self$results$plot3$setVisible(
+        isTRUE(self$options$plot3) && supportGridAvailable
+      )
+      
+      self$results$plot4$setVisible(
+        isTRUE(self$options$plot4) && supportGridAvailable
+      )
+      
+      self$results$plot5$setVisible(
+        isTRUE(self$options$plot5) && supportGridAvailable
+      )
+      
+      self$results$plot6$setVisible(
+        isTRUE(self$options$plot6) && reestimationPlotsAvailable
+      )
+      
+      self$results$plot7$setVisible(
+        isTRUE(self$options$plot7) && reestimationPlotsAvailable
       )
       
       if (sum(selectedPlots) > 2) {
@@ -246,12 +271,36 @@ TASWGCEClass <- R6::R6Class(
       
       warningMsg <- NULL
       
+      fixedSupportSignal <- NULL
+      
+      if (self$options$supportSignalVectorN == 1L) {
+        
+        fixedSupportSignal <- self$options$supportSignal
+        
+        if (
+          length(fixedSupportSignal) != 1L ||
+          is.na(fixedSupportSignal) ||
+          !is.finite(fixedSupportSignal) ||
+          fixedSupportSignal <= 0
+        ) {
+          self$results$text$setContent(
+            paste0(
+              "<p style='color:red;'><b>Error:</b> ",
+              "The signal support value must be a positive finite number.",
+              "</p>"
+            )
+          )
+          return()
+        }
+      }
+      
       fit <- tryCatch(
         withCallingHandlers(
         GCEstim::cv.lmgce(
           formula = form,
           data = data,
           support.method = "standardized",
+          support.signal = fixedSupportSignal,
           support.signal.vector.n = self$options$supportSignalVectorN,
           support.signal.vector.min = self$options$supportSignalVectorMin,
           support.signal.vector.max = self$options$supportSignalVectorMax,
@@ -558,26 +607,26 @@ TASWGCEClass <- R6::R6Class(
                                      OLS = self$options$OLS),
                                 error = function(e) NULL)
 
-      if (self$options$plot2)
+      if (self$options$plot2 && supportGridAvailable)
         plots$plot2 <- tryCatch(plot(bestFit,
                                      which = 2,
                                      OLS = self$options$OLS,
                                      NormEnt = self$options$NormEnt),
                                 error = function(e) NULL)
 
-      if (self$options$plot3)
+      if (self$options$plot3 && supportGridAvailable)
         plots$plot3 <- tryCatch(plot(bestFit,
                                      which = 3,
                                      OLS = self$options$OLS),
                                 error = function(e) NULL)
 
-      if (self$options$plot4)
+      if (self$options$plot4 && supportGridAvailable)
         plots$plot4 <- tryCatch(plot(bestFit,
                                      which = 4,
                                      OLS = self$options$OLS),
                                 error = function(e) NULL)
 
-      if (self$options$plot5)
+      if (self$options$plot5 && supportGridAvailable)
         plots$plot5 <- tryCatch(plot(bestFit,
                                      which = 5,
                                      coef = trueCoef,
@@ -585,13 +634,13 @@ TASWGCEClass <- R6::R6Class(
                                      NormEnt = self$options$NormEnt),
                                 error = function(e) NULL)
 
-      if (self$options$plot6)
+      if (self$options$plot6 && reestimationPlotsAvailable)
         plots$plot6 <- tryCatch(plot(bestFit,
                                      which = 6,
                                      OLS = self$options$OLS),
                                 error = function(e) NULL)
 
-      if (self$options$plot7)
+      if (self$options$plot7 && reestimationPlotsAvailable)
         plots$plot7 <- tryCatch(plot(bestFit,
                                      which = 7,
                                      coef = trueCoef,
@@ -613,22 +662,22 @@ TASWGCEClass <- R6::R6Class(
       if (self$options$plot1)
         self$results$plot1$setState(list(p = plots$plot1))
 
-      if (self$options$plot2)
+      if (self$options$plot2 && supportGridAvailable)
         self$results$plot2$setState(list(p = plots$plot2))
-
-      if (self$options$plot3)
+      
+      if (self$options$plot3 && supportGridAvailable)
         self$results$plot3$setState(list(p = plots$plot3))
-
-      if (self$options$plot4)
+      
+      if (self$options$plot4 && supportGridAvailable)
         self$results$plot4$setState(list(p = plots$plot4))
-
-      if (self$options$plot5)
+      
+      if (self$options$plot5 && supportGridAvailable)
         self$results$plot5$setState(list(p = plots$plot5))
 
-      if (self$options$plot6)
+      if (self$options$plot6 && reestimationPlotsAvailable)
         self$results$plot6$setState(list(p = plots$plot6))
 
-      if (self$options$plot7)
+      if (self$options$plot7 && reestimationPlotsAvailable)
         self$results$plot7$setState(list(p = plots$plot7))
       
       if (isTRUE(self$options$plotCV) && cvPlotAvailable)
