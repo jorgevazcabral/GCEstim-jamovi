@@ -415,6 +415,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         cvResults = function() private$.items[["cvResults"]],
         plotRidge = function() private$.items[["plotRidge"]],
         coefficients = function() private$.items[["coefficients"]],
+        signalProbabilities = function() private$.items[["signalProbabilities"]],
         plot1 = function() private$.items[["plot1"]],
         plot2 = function() private$.items[["plot2"]],
         plot3 = function() private$.items[["plot3"]],
@@ -557,6 +558,15 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `type`="number", 
                         `format`="zto,pvalue", 
                         `visible`="(bootstrap == 0)"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="signalProbabilities",
+                title="Estimated signal support probabilities (p)",
+                columns=list(
+                    list(
+                        `name`="term", 
+                        `title`="Coefficient", 
+                        `type`="text"))))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot1",
@@ -676,6 +686,7 @@ TARWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$cvResults} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$plotRidge} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$coefficients} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$signalProbabilities} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$plot1} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plot2} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plot3} \tab \tab \tab \tab \tab an image \cr
