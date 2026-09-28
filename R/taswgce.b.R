@@ -593,6 +593,42 @@ TASWGCEClass <- R6::R6Class(
         )
       }
       
+      pMatrix <- as.matrix(bestFit$p)
+      
+      if (!is.null(bestFit$p) &&
+          nrow(pMatrix) == nrow(coefs) &&
+          ncol(pMatrix) > 0L) {
+        
+        pTable <- self$results$signalProbabilities
+        pKeys <- paste0("p", seq_len(ncol(pMatrix)))
+        
+        for (j in seq_len(ncol(pMatrix))) {
+          pTable$addColumn(
+            name = pKeys[j],
+            title = paste0("p_", j),
+            type = "number",
+            format = "zto"
+          )
+        }
+        
+        pTerms <- rownames(pMatrix)
+        if (is.null(pTerms))
+          pTerms <- rownames(coefs)
+        
+        for (i in seq_len(nrow(pMatrix))) {
+          pTable$addRow(
+            rowKey = as.character(i),
+            values = c(
+              list(term = pTerms[i]),
+              stats::setNames(
+                as.list(as.numeric(pMatrix[i, ])),
+                pKeys
+              )
+            )
+          )
+        }
+      }
+      
       self$results$text$setContent("<p>Tables completed. Plotting...</p>")
       
       plots <- list()
