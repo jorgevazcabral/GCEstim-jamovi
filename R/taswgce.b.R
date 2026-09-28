@@ -5,10 +5,10 @@ TASWGCEClass <- R6::R6Class(
     
     .run = function() {
       
-      .libPaths(c(
-            "C:/Users/jorge/AppData/Local/R/win-library/4.5",
-            .libPaths()
-       ))
+      # .libPaths(c(
+      #       "C:/Users/jorge/AppData/Local/R/win-library/4.5",
+      #       .libPaths()
+      #  ))
         
       dep  <- unlist(self$options$dep)
       covs    <- unlist(self$options$covs)
