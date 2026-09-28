@@ -128,6 +128,14 @@ items:
         format: zto,pvalue
         visible: (bootstrap == 0)
 
+  - name: signalProbabilities
+    title: Estimated signal support probabilities (p)
+    type: Table
+    columns:
+      - name: term
+        title: Coefficient
+        type: text
+
   - name: plot1
     title: Estimates and confidence intervals
     type: Image
