@@ -4,11 +4,6 @@ TARWGCEClass <- R6::R6Class(
   private = list(
     
     .run = function() {
-      
-      # .libPaths(c(
-      #       "C:/Users/jorge/AppData/Local/R/win-library/4.5",
-      #       .libPaths()
-      #  ))
         
       dep  <- unlist(self$options$dep)
       covs    <- unlist(self$options$covs)

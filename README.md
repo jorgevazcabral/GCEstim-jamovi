@@ -28,6 +28,12 @@ Users of a compatible prebuilt `.jmo` do **not** need to install R or the GCEsti
 
 For W-GCE, **Lower limits** and **Upper limits** accept one number for all coefficients or comma-separated values for individual coefficients. For TARW-GCE and TASW-GCE, enter comma-separated candidate signal points, noise points, and weights, for example `3, 5, 7, 9` and `0.1, 0.3, 0.5, 0.7, 0.9`. Signal and noise point counts must be odd integers of at least 3. The adaptive analyses offer `min` and `1se` rules for selecting the cross-validation result. Larger candidate grids and bootstrap settings can increase computation time substantially.
 
+## Example data
+
+The module includes [`dataThesis.csv`](data/dataThesis.csv). It contains 75 observations, numeric predictors `X001`–`X004`, a three-level factor `X005` (A, B, C), and a continuous outcome `y`.
+
+After installing the module, open jamovi's **main menu → Open → Data Library** and select **dataThesis**. To try any of the three analyses, set **Dependent Variable** to `y`, add `X001`–`X004` as **Covariates**, and optionally add `X005` as a **Factor**. Click **Run model**. For a quicker first run of TARW-GCE or TASW-GCE, use `3, 5` for signal support points, `3` for noise support points, `0.5` for the noise weight, and `2` signal support spaces.
+
 ## Build from source
 
 Building requires a compatible installation of jamovi, R, and [`jmvtools`](https://github.com/jamovi/jmvtools). With this repository open as an RStudio project, run in the R console (adjust the jamovi path to your installation):

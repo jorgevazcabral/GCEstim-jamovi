@@ -6,13 +6,22 @@ jms: '1.0'
 authors:
   - Jorge Cabral
 maintainer: Jorge Cabral <jorgecabral@ua.pt>
-date: '2026-09-23'
+date: '2026-09-28'
 type: R
 description: >-
   A jamovi interface for generalized maximum-entropy and generalized
   cross-entropy linear regression using the GCEstim R package. Includes
   data-driven support construction, cross-validation, two-stage re-estimation,
   confidence intervals, and diagnostic plots.
+datasets:
+  - name: dataThesis
+    path: dataThesis.csv
+    description: >-
+      Example linear regression data with four numeric predictors, one factor,
+      and an outcome (75 observations).
+    tags:
+      - Regression
+      - GCE
 analyses:
   - title: W-GCE Linear Model
     name: WGCE

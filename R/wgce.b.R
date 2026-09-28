@@ -4,11 +4,6 @@ WGCEClass <- R6::R6Class(
   private = list(
 
     .run = function() {
-      
-      # .libPaths(c(
-      #   "C:/Users/jorge/AppData/Local/R/win-library/4.5",
-      #   .libPaths()
-      # ))
 
       escapeHTML <- function(x) {
         x <- gsub("&", "&amp;", as.character(x), fixed = TRUE)
