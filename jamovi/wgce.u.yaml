@@ -1,0 +1,140 @@
+title: W-GCE Linear Model
+name: WGCE
+jus: '3.0'
+compilerMode: tame
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Dependent Variable
+        children:
+          - type: VariablesListBox
+            name: dep
+            maxItemCount: 1
+            isTarget: true
+            suggested:
+              - continuous
+            permitted:
+              - numeric
+      - type: TargetLayoutBox
+        label: Covariates
+        children:
+          - type: VariablesListBox
+            name: covs
+            isTarget: true
+            suggested:
+              - continuous
+            permitted:
+              - numeric
+      - type: TargetLayoutBox
+        label: Factors
+        children:
+          - type: VariablesListBox
+            name: factors
+            isTarget: true
+            suggested:
+              - nominal
+              - ordinal
+            permitted:
+              - factor
+  - type: CheckBox
+    name: intercept
+  - type: ActionButton
+    name: run
+  - type: CollapseBox
+    label: Signal support
+    collapsed: false
+    children:
+      - type: Label
+        label: Enter one value for all coefficients, or one per coefficient.
+      - type: Label
+        label: Include the intercept if selected. For factors, include each non-reference level.
+      - type: TextBox
+        name: supportSignalLowers
+        label: Lower limits (comma separated)
+        format: string
+        width: largest
+      - type: TextBox
+        name: supportSignalUppers
+        label: Upper limits (comma separated)
+        format: string
+        width: largest
+      - type: TextBox
+        name: M
+        format: number
+  - type: CollapseBox
+    label: Noise support
+    collapsed: false
+    children:
+      - type: TextBox
+        name: J
+        format: number
+      - type: TextBox
+        name: weight
+        format: number
+      - type: CheckBox
+        name: supportNoise3sig
+      - type: TextBox
+        name: supportNoiseMin
+        format: number
+        enable: (!supportNoise3sig)
+      - type: TextBox
+        name: supportNoiseMax
+        format: number
+        enable: (!supportNoise3sig)
+  - type: CollapseBox
+    label: Estimation
+    collapsed: true
+    children:
+      - type: ComboBox
+        name: method
+      - type: ComboBox
+        name: caseGLM
+  - type: CollapseBox
+    label: Confidence Intervals
+    collapsed: true
+    children:
+      - type: TextBox
+        name: bootConfLevel
+        format: number
+      - type: CheckBox
+        name: bootstrap
+      - type: TextBox
+        name: bootB
+        format: number
+        enable: (bootstrap)
+      - type: ComboBox
+        name: bootMethod
+        enable: (bootstrap)
+      - type: ComboBox
+        name: bootCIMethod
+        enable: (bootstrap)
+      - type: TextBox
+        name: seed
+        format: number
+        width: large
+        
+  - type: CollapseBox
+    label: Plots
+    collapsed: true
+    children:
+      - type: CheckBox
+        name: plot1
+      - type: CheckBox
+        name: OLS
+  - type: CollapseBox
+    label: Save
+    collapsed: true
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: Output
+            name: saveFitted
+          - type: Output
+            name: saveResiduals
+          - type: Output
+            name: saveW
+

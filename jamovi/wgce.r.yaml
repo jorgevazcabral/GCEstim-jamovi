@@ -1,0 +1,126 @@
+---
+name: WGCE
+title: W-GCE Linear Model
+jrs: '1.1'
+refs:
+  - GCEstim
+
+items:
+  - name: text
+    title: Status
+    type: Html
+
+  - name: reference
+    title: GCEstim reference
+    type: Html
+
+  - name: modelSummary
+    title: Model Summary
+    type: Table
+    columns:
+      - name: measure
+        title: Measure
+        type: text
+      - name: value
+        title: Value
+        type: text
+
+  - name: signalSupports
+    title: Signal Supports
+    type: Table
+    columns:
+      - name: term
+        title: Coefficient
+        type: text
+      - name: lower
+        title: Lower limit
+        type: number
+        format: zto
+      - name: upper
+        title: Upper limit
+        type: number
+        format: zto
+
+  - name: coefficients
+    title: Coefficients
+    type: Table
+    columns:
+      - name: term
+        title: Term
+        type: text
+      - name: estimate
+        title: Estimate
+        type: number
+        format: zto
+      - name: ciLowerZ
+        title: CI Lower
+        type: number
+        format: zto
+        visible: (bootstrap == 0)
+      - name: ciUpperZ
+        title: CI Upper
+        type: number
+        format: zto
+        visible: (bootstrap == 0)
+      - name: ciLower
+        title: Bootstrap CI Lower
+        type: number
+        format: zto
+        visible: (bootstrap)
+      - name: ciUpper
+        title: Bootstrap CI Upper
+        type: number
+        format: zto
+        visible: (bootstrap)
+      - name: se
+        title: Std. Deviation
+        type: number
+        format: zto
+        visible: (bootstrap == 0)
+      - name: z
+        title: z value
+        type: number
+        format: zto
+        visible: (bootstrap == 0)
+      - name: p
+        title: p
+        type: number
+        format: zto,pvalue
+        visible: (bootstrap == 0)
+
+  - name: plot1
+    title: Estimates and confidence intervals
+    type: Image
+    renderFun: .plot1
+    visible: (plot1)
+
+  - name: saveFitted
+    type: Output
+    title: Fitted values
+    varTitle: WGCE fitted
+    varDescription: W-GCE fitted value for each complete observation
+    measureType: continuous
+
+  - name: saveResiduals
+    type: Output
+    title: Residuals
+    varTitle: WGCE residual
+    varDescription: W-GCE residual for each complete observation
+    measureType: continuous
+
+  - name: saveW
+    type: Output
+    title: Estimated noise support probabilities (w)
+    varTitle: WGCE w_$key
+    varDescription: W-GCE noise probability at support point $key
+    measureType: continuous
+    items: (J)
+
+  - name: signalProbabilities
+    title: Estimated signal support probabilities (p)
+    type: Table
+    columns:
+      - name: term
+        title: Coefficient
+        type: text
+...
