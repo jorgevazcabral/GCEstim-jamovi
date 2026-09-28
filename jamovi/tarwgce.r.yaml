@@ -191,5 +191,13 @@ items:
     varTitle: TARW-GCE residual
     varDescription: TARW-GCE residual for each complete observation
     measureType: continuous
+  
+  - name: saveW
+    type: Output
+    title: Estimated noise support probabilities (w)
+    varTitle: TARW-GCE w
+    varDescription: TARW-GCE noise probability from the selected model
+    measureType: continuous
+    initInRun: true
 ...
   

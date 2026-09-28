@@ -377,6 +377,37 @@ TARWGCEClass <- R6::R6Class(
         )
       }
       
+      if (self$options$saveW && self$options$caseGLM == "D") {
+        w <- as.matrix(bestFit$w)
+        
+        if (nrow(w) != nrow(data) || ncol(w) < 1L) {
+          self$results$text$setContent(
+            "<p><b>Error:</b> Noise probabilities do not match the complete cases.</p>"
+          )
+          return()
+        }
+        
+        if (self$results$saveW$isNotFilled()) {
+          keys <- as.character(seq_len(ncol(w)))
+          
+          self$results$saveW$set(
+            keys,
+            paste0("TARW-GCE w", keys),
+            paste0("Selected model noise probability at support point ", keys),
+            rep("continuous", length(keys))
+          )
+          
+          self$results$saveW$setRowNums(rownames(data))
+          
+          for (j in seq_len(ncol(w))) {
+            self$results$saveW$setValues(
+              as.numeric(w[, j]),
+              index = j
+            )
+          }
+        }
+      }
+      
       elapsed <- as.numeric(
         difftime(Sys.time(), start_time, units = "secs")
       )

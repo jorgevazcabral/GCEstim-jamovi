@@ -276,6 +276,8 @@ TARWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "saveFitted")
             private$..saveResiduals <- jmvcore::OptionOutput$new(
                 "saveResiduals")
+            private$..saveW <- jmvcore::OptionOutput$new(
+                "saveW")
 
             self$.addOption(private$..run)
             self$.addOption(private$..dep)
@@ -321,6 +323,7 @@ TARWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..trueCoef)
             self$.addOption(private$..saveFitted)
             self$.addOption(private$..saveResiduals)
+            self$.addOption(private$..saveW)
         }),
     active = list(
         run = function() private$..run$value,
@@ -366,7 +369,8 @@ TARWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         plotRidge = function() private$..plotRidge$value,
         trueCoef = function() private$..trueCoef$value,
         saveFitted = function() private$..saveFitted$value,
-        saveResiduals = function() private$..saveResiduals$value),
+        saveResiduals = function() private$..saveResiduals$value,
+        saveW = function() private$..saveW$value),
     private = list(
         ..run = NA,
         ..dep = NA,
@@ -411,7 +415,8 @@ TARWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..plotRidge = NA,
         ..trueCoef = NA,
         ..saveFitted = NA,
-        ..saveResiduals = NA)
+        ..saveResiduals = NA,
+        ..saveW = NA)
 )
 
 TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -434,7 +439,8 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         plot6 = function() private$.items[["plot6"]],
         plot7 = function() private$.items[["plot7"]],
         saveFitted = function() private$.items[["saveFitted"]],
-        saveResiduals = function() private$.items[["saveResiduals"]]),
+        saveResiduals = function() private$.items[["saveResiduals"]],
+        saveW = function() private$.items[["saveW"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -634,7 +640,15 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 title="Residuals",
                 varTitle="TARW-GCE residual",
                 varDescription="TARW-GCE residual for each complete observation",
-                measureType="continuous"))}))
+                measureType="continuous"))
+            self$add(jmvcore::Output$new(
+                options=options,
+                name="saveW",
+                title="Estimated noise support probabilities (w)",
+                varTitle="TARW-GCE w",
+                varDescription="TARW-GCE noise probability from the selected model",
+                measureType="continuous",
+                initInRun=TRUE))}))
 
 TARWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "TARWGCEBase",
@@ -722,6 +736,7 @@ TARWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$plot7} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$saveFitted} \tab \tab \tab \tab \tab an output \cr
 #'   \code{results$saveResiduals} \tab \tab \tab \tab \tab an output \cr
+#'   \code{results$saveW} \tab \tab \tab \tab \tab an output \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:

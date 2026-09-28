@@ -278,10 +278,14 @@ options:
     default: ''
     
   - name: saveFitted
-    title: Save fitted values
+    title: Fitted values
     type: Output
   
   - name: saveResiduals
-    title: Save residuals
+    title: Residuals
+    type: Output
+    
+  - name: saveW
+    title: Estimated noise support probabilities (w)
     type: Output
 ...

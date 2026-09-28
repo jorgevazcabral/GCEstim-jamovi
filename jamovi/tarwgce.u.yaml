@@ -219,3 +219,5 @@ children:
             name: saveFitted
           - type: Output
             name: saveResiduals
+          - type: Output
+            name: saveW
