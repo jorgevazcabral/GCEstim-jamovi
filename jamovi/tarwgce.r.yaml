@@ -184,5 +184,12 @@ items:
     varTitle: TARW-GCE fitted
     varDescription: TARW-GCE fitted value for each complete observation
     measureType: continuous  
+  
+  - name: saveResiduals
+    type: Output
+    title: Residuals
+    varTitle: TARW-GCE residual
+    varDescription: TARW-GCE residual for each complete observation
+    measureType: continuous
 ...
   

@@ -369,6 +369,14 @@ TARWGCEClass <- R6::R6Class(
         )
       }
       
+      if (self$options$saveResiduals &&
+          self$results$saveResiduals$isNotFilled()) {
+        self$results$saveResiduals$setRowNums(rownames(data))
+        self$results$saveResiduals$setValues(
+          as.numeric(bestFit$residuals)
+        )
+      }
+      
       elapsed <- as.numeric(
         difftime(Sys.time(), start_time, units = "secs")
       )

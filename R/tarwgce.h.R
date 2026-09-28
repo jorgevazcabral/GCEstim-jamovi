@@ -274,6 +274,8 @@ TARWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 default="")
             private$..saveFitted <- jmvcore::OptionOutput$new(
                 "saveFitted")
+            private$..saveResiduals <- jmvcore::OptionOutput$new(
+                "saveResiduals")
 
             self$.addOption(private$..run)
             self$.addOption(private$..dep)
@@ -318,6 +320,7 @@ TARWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..plotRidge)
             self$.addOption(private$..trueCoef)
             self$.addOption(private$..saveFitted)
+            self$.addOption(private$..saveResiduals)
         }),
     active = list(
         run = function() private$..run$value,
@@ -362,7 +365,8 @@ TARWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         plotCV = function() private$..plotCV$value,
         plotRidge = function() private$..plotRidge$value,
         trueCoef = function() private$..trueCoef$value,
-        saveFitted = function() private$..saveFitted$value),
+        saveFitted = function() private$..saveFitted$value,
+        saveResiduals = function() private$..saveResiduals$value),
     private = list(
         ..run = NA,
         ..dep = NA,
@@ -406,7 +410,8 @@ TARWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..plotCV = NA,
         ..plotRidge = NA,
         ..trueCoef = NA,
-        ..saveFitted = NA)
+        ..saveFitted = NA,
+        ..saveResiduals = NA)
 )
 
 TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -428,7 +433,8 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         plot5 = function() private$.items[["plot5"]],
         plot6 = function() private$.items[["plot6"]],
         plot7 = function() private$.items[["plot7"]],
-        saveFitted = function() private$.items[["saveFitted"]]),
+        saveFitted = function() private$.items[["saveFitted"]],
+        saveResiduals = function() private$.items[["saveResiduals"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -621,6 +627,13 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 title="Fitted values",
                 varTitle="TARW-GCE fitted",
                 varDescription="TARW-GCE fitted value for each complete observation",
+                measureType="continuous"))
+            self$add(jmvcore::Output$new(
+                options=options,
+                name="saveResiduals",
+                title="Residuals",
+                varTitle="TARW-GCE residual",
+                varDescription="TARW-GCE residual for each complete observation",
                 measureType="continuous"))}))
 
 TARWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -708,6 +721,7 @@ TARWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$plot6} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plot7} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$saveFitted} \tab \tab \tab \tab \tab an output \cr
+#'   \code{results$saveResiduals} \tab \tab \tab \tab \tab an output \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:

@@ -279,5 +279,9 @@ options:
     
   - name: saveFitted
     title: Save fitted values
-    type: Output 
+    type: Output
+  
+  - name: saveResiduals
+    title: Save residuals
+    type: Output
 ...
