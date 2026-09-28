@@ -276,4 +276,8 @@ options:
     title: True coefficients
     type: String
     default: ''
+    
+  - name: saveFitted
+    title: Save fitted values
+    type: Output 
 ...

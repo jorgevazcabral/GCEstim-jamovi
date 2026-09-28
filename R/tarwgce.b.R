@@ -361,6 +361,14 @@ TARWGCEClass <- R6::R6Class(
         return()
       }
       
+      if (self$options$saveFitted &&
+          self$results$saveFitted$isNotFilled()) {
+        self$results$saveFitted$setRowNums(rownames(data))
+        self$results$saveFitted$setValues(
+          as.numeric(bestFit$fitted.values)
+        )
+      }
+      
       elapsed <- as.numeric(
         difftime(Sys.time(), start_time, units = "secs")
       )

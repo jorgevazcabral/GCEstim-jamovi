@@ -177,5 +177,12 @@ items:
     type: Image
     renderFun: .plot7
     visible: false
+    
+  - name: saveFitted
+    type: Output
+    title: Fitted values
+    varTitle: TARW-GCE fitted
+    varDescription: TARW-GCE fitted value for each complete observation
+    measureType: continuous  
 ...
   
