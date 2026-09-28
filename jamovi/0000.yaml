@@ -21,13 +21,6 @@ analyses:
     menuGroup: GCEstim
     menuTitle: W-GCE
     menuSubgroup: Regression
-  - title: GCE Linear Model
-    name: LMGCE
-    ns: GCEstimjmv
-    category: analyses
-    menuGroup: GCEstim
-    menuTitle: Linear GCE
-    menuSubgroup: Regression
   - title: TARW-GCE Linear Model
     name: TARWGCE
     ns: GCEstimjmv
