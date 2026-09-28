@@ -171,5 +171,27 @@ items:
     type: Image
     renderFun: .plot7
     visible: false
+    
+  - name: saveFitted
+    type: Output
+    title: Fitted values
+    varTitle: TASW-GCE fitted
+    varDescription: TASW-GCE fitted value for each complete observation
+    measureType: continuous  
+  
+  - name: saveResiduals
+    type: Output
+    title: Residuals
+    varTitle: TASW-GCE residual
+    varDescription: TASW-GCE residual for each complete observation
+    measureType: continuous
+  
+  - name: saveW
+    type: Output
+    title: Estimated noise support probabilities (w)
+    varTitle: TASW-GCE w
+    varDescription: TASW-GCE noise probability from the selected model
+    measureType: continuous
+    initInRun: true
 ...
   

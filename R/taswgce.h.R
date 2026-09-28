@@ -233,6 +233,12 @@ TASWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "trueCoef",
                 trueCoef,
                 default="")
+            private$..saveFitted <- jmvcore::OptionOutput$new(
+                "saveFitted")
+            private$..saveResiduals <- jmvcore::OptionOutput$new(
+                "saveResiduals")
+            private$..saveW <- jmvcore::OptionOutput$new(
+                "saveW")
 
             self$.addOption(private$..run)
             self$.addOption(private$..dep)
@@ -270,6 +276,9 @@ TASWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..plot7)
             self$.addOption(private$..plotCV)
             self$.addOption(private$..trueCoef)
+            self$.addOption(private$..saveFitted)
+            self$.addOption(private$..saveResiduals)
+            self$.addOption(private$..saveW)
         }),
     active = list(
         run = function() private$..run$value,
@@ -307,7 +316,10 @@ TASWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         plot6 = function() private$..plot6$value,
         plot7 = function() private$..plot7$value,
         plotCV = function() private$..plotCV$value,
-        trueCoef = function() private$..trueCoef$value),
+        trueCoef = function() private$..trueCoef$value,
+        saveFitted = function() private$..saveFitted$value,
+        saveResiduals = function() private$..saveResiduals$value,
+        saveW = function() private$..saveW$value),
     private = list(
         ..run = NA,
         ..dep = NA,
@@ -344,7 +356,10 @@ TASWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..plot6 = NA,
         ..plot7 = NA,
         ..plotCV = NA,
-        ..trueCoef = NA)
+        ..trueCoef = NA,
+        ..saveFitted = NA,
+        ..saveResiduals = NA,
+        ..saveW = NA)
 )
 
 TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -364,7 +379,10 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         plot4 = function() private$.items[["plot4"]],
         plot5 = function() private$.items[["plot5"]],
         plot6 = function() private$.items[["plot6"]],
-        plot7 = function() private$.items[["plot7"]]),
+        plot7 = function() private$.items[["plot7"]],
+        saveFitted = function() private$.items[["saveFitted"]],
+        saveResiduals = function() private$.items[["saveResiduals"]],
+        saveW = function() private$.items[["saveW"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -544,7 +562,29 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="plot7",
                 title="GCE reestimation vs precision error",
                 renderFun=".plot7",
-                visible=FALSE))}))
+                visible=FALSE))
+            self$add(jmvcore::Output$new(
+                options=options,
+                name="saveFitted",
+                title="Fitted values",
+                varTitle="TASW-GCE fitted",
+                varDescription="TASW-GCE fitted value for each complete observation",
+                measureType="continuous"))
+            self$add(jmvcore::Output$new(
+                options=options,
+                name="saveResiduals",
+                title="Residuals",
+                varTitle="TASW-GCE residual",
+                varDescription="TASW-GCE residual for each complete observation",
+                measureType="continuous"))
+            self$add(jmvcore::Output$new(
+                options=options,
+                name="saveW",
+                title="Estimated noise support probabilities (w)",
+                varTitle="TASW-GCE w",
+                varDescription="TASW-GCE noise probability from the selected model",
+                measureType="continuous",
+                initInRun=TRUE))}))
 
 TASWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "TASWGCEBase",
@@ -564,7 +604,7 @@ TASWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 pause = NULL,
                 completeWhenFilled = FALSE,
                 requiresMissings = FALSE,
-                weightsSupport = 'auto')
+                weightsSupport = 'none')
         }))
 
 #' TASW-GCE Linear Model
@@ -623,6 +663,9 @@ TASWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$plot5} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plot6} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plot7} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$saveFitted} \tab \tab \tab \tab \tab an output \cr
+#'   \code{results$saveResiduals} \tab \tab \tab \tab \tab an output \cr
+#'   \code{results$saveW} \tab \tab \tab \tab \tab an output \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:

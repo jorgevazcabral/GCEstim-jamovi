@@ -111,7 +111,7 @@ items:
   - name: saveW
     type: Output
     title: Estimated noise support probabilities (w)
-    varTitle: WGCE w_$key
+    varTitle: WGCE w$key
     varDescription: W-GCE noise probability at support point $key
     measureType: continuous
     items: (J)

@@ -233,4 +233,16 @@ options:
     title: True coefficients
     type: String
     default: ''
+  
+  - name: saveFitted
+    title: Fitted values
+    type: Output
+  
+  - name: saveResiduals
+    title: Residuals
+    type: Output
+    
+  - name: saveW
+    title: Estimated noise support probabilities (w)
+    type: Output
 ...

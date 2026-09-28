@@ -206,3 +206,17 @@ children:
         label: Seed
         format: number
         width: large
+        
+  - type: CollapseBox
+    label: Save
+    collapsed: true
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: Output
+            name: saveFitted
+          - type: Output
+            name: saveResiduals
+          - type: Output
+            name: saveW
