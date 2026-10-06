@@ -41,7 +41,7 @@ After installing the module, open jamovi's **main menu → Open → Data Library
 Building requires a compatible installation of jamovi, R, and [`jmvtools`](https://github.com/jamovi/jmvtools). With this repository open as an RStudio project, run in the R console (adjust the jamovi path to your installation):
 
 ```r
-options(jamovi_home = "C:/Program Files/jamovi 2.7.33.0")
+options(jamovi_home = "C:/Program Files/jamovi 2.7.33.0")  # adjust if needed
 
 jmvtools::prepare()
 jmvtools::install()
