@@ -9,8 +9,9 @@ jas: '1.2'
 
 options:
   - name: run
-    title: Run model
-    type: Action
+    title: Fit and update model
+    type: Bool
+    default: false
     
   - name: data
     type: Data
@@ -28,7 +29,7 @@ options:
     type: Variables
     
   - name: intercept
-    title: Include intercept
+    title: Intercept
     type: Bool
     default: true
   
@@ -115,8 +116,10 @@ options:
     title: Error selection rule
     type: List
     options:
-      - 1se
-      - min
+      - name: 1se
+        title: 'Within one standard error'
+      - name: min
+        title: 'Minimum error'
     default: 1se
   
   - name: supportSignalVectorMin
@@ -154,7 +157,7 @@ options:
     default: sigma3
 
   - name: twostepsN
-    title: Number of post-GCE reestimations
+    title: Number of post-GCE re-estimations
     type: Integer
     default: 1
     min: 0
@@ -166,12 +169,12 @@ options:
     min: 1
     
   - name: OLS
-    title: Include OLS
+    title: OLS comparison
     type: Bool
     default: false
 
   - name: NormEnt
-    title: Compute normalized entropy
+    title: Normalized entropy
     type: Bool
     default: false
     
@@ -184,22 +187,28 @@ options:
     title: Number of bootstrap samples
     type: Integer
     default: 100
+    min: 10
   
   - name: bootMethod
     title: Bootstrap method
     type: List
     options:
-      - residuals
-      - cases
-      - wild
+      - name: residuals
+        title: 'Residual'
+      - name: cases
+        title: 'Case'
+      - name: wild
+        title: 'Wild'
     default: residuals
   
   - name: bootCIMethod
     title: Bootstrap confidence interval method
     type: List
     options:
-      - percentile
-      - basic
+      - name: percentile
+        title: 'Percentile'
+      - name: basic
+        title: 'Basic'
     default: percentile
   
   - name: bootConfLevel
@@ -213,18 +222,30 @@ options:
     title: Optimization method
     type: List
     options:
-      - dual.BFGS
-      - dual.lbfgsb3c
-      - dual.L-BFGS-B
-      - dual.lbfgs
-      - dual.CG
-      - dual.Rcgmin
-      - dual.bobyqa
-      - dual.newuoa
-      - dual.nlminb
-      - dual.nlm
-      - primal.solnl
-      - primal.solnp
+      - name: dual.BFGS
+        title: 'Dual: BFGS'
+      - name: dual.lbfgsb3c
+        title: 'Dual: lbfgsb3c'
+      - name: dual.L-BFGS-B
+        title: 'Dual: L-BFGS-B'
+      - name: dual.lbfgs
+        title: 'Dual: lbfgs'
+      - name: dual.CG
+        title: 'Dual: CG'
+      - name: dual.Rcgmin
+        title: 'Dual: Rcgmin'
+      - name: dual.bobyqa
+        title: 'Dual: bobyqa'
+      - name: dual.newuoa
+        title: 'Dual: newuoa'
+      - name: dual.nlminb
+        title: 'Dual: nlminb'
+      - name: dual.nlm
+        title: 'Dual: nlm'
+      - name: primal.solnl
+        title: 'Primal: solnl'
+      - name: primal.solnp
+        title: 'Primal: solnp'
     default: dual.BFGS
   
   - name: plot1
@@ -253,12 +274,12 @@ options:
     default: false
 
   - name: plot6
-    title: GCE reestimation vs prediction error
+    title: GCE re-estimation vs prediction error
     type: Bool
     default: false
 
   - name: plot7
-    title: GCE reestimation vs precision error
+    title: GCE re-estimation vs precision error
     type: Bool
     default: false
   

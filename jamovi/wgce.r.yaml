@@ -10,10 +10,6 @@ items:
     title: Status
     type: Html
 
-  - name: reference
-    title: GCEstim reference
-    type: Html
-
   - name: modelSummary
     title: Model Summary
     type: Table
@@ -35,11 +31,9 @@ items:
       - name: lower
         title: Lower limit
         type: number
-        format: zto
       - name: upper
         title: Upper limit
         type: number
-        format: zto
 
   - name: coefficients
     title: Coefficients
@@ -51,36 +45,19 @@ items:
       - name: estimate
         title: Estimate
         type: number
-        format: zto
-      - name: ciLowerZ
-        title: CI Lower
-        type: number
-        format: zto
-        visible: (bootstrap == 0)
-      - name: ciUpperZ
-        title: CI Upper
-        type: number
-        format: zto
-        visible: (bootstrap == 0)
       - name: ciLower
-        title: Bootstrap CI Lower
+        title: Lower
         type: number
-        format: zto
-        visible: (bootstrap)
       - name: ciUpper
-        title: Bootstrap CI Upper
+        title: Upper
         type: number
-        format: zto
-        visible: (bootstrap)
       - name: se
         title: Std. Deviation
         type: number
-        format: zto
         visible: (bootstrap == 0)
       - name: z
         title: z value
         type: number
-        format: zto
         visible: (bootstrap == 0)
       - name: p
         title: p

@@ -3,6 +3,8 @@ name: TARWGCE
 jus: '3.0'
 compilerMode: tame
 children:
+  - type: CheckBox
+    name: run
   - type: VariableSupplier
     persistentItems: false
     stretchFactor: 1
@@ -41,10 +43,8 @@ children:
               - factor
   - type: CheckBox
     name: intercept
-  - type: ActionButton
-    name: run
   - type: CollapseBox
-    label: Signal support
+    label: Signal Support
     collapsed: false
     children:
       - type: Label
@@ -80,6 +80,8 @@ children:
         label: Signal support points (comma separated)
         format: string
         width: largest
+      - type: Label
+        label: 'One or more odd integers at least 3; e.g., 3, 9, 15.'
       - type: TextBox
         name: supportSignalVectorN
         format: number
@@ -96,7 +98,7 @@ children:
         label: Max. signal support range
         format: number
   - type: CollapseBox
-    label: Noise support
+    label: Noise Support
     collapsed: false
     children:
       - type: TextBox
@@ -104,11 +106,15 @@ children:
         label: Noise support points (comma separated)
         format: string
         width: largest
+      - type: Label
+        label: 'One or more odd integers at least 3; e.g., 3, 5, 7.'
       - type: TextBox
         name: weight
         label: Noise weight values (comma separated)
         format: string
         width: largest
+      - type: Label
+        label: 'Values from 0 to 1; e.g., 0.1, 0.5, 0.9.'
       - type: Label
         label: Noise support specification
         children:
@@ -131,6 +137,13 @@ children:
       - type: TextBox
         name: twostepsN
         format: number
+      - type: ComboBox
+        name: caseGLM
+      - type: TextBox
+        name: seed
+        label: Seed
+        format: number
+        width: large
   - type: CollapseBox
     label: Confidence Intervals
     collapsed: true
@@ -151,7 +164,6 @@ children:
         enable: (bootstrap)
       - type: ComboBox
         name: bootCIMethod
-        label: Bootstrap confidence level method
         enable: (bootstrap)
   - type: CollapseBox
     label: Plots
@@ -181,33 +193,26 @@ children:
         format: string
         width: largest
         enable: (plot5 || plot7)
+      - type: CheckBox
+        name: OLS
+      - type: CheckBox
+        name: NormEnt
   - type: CollapseBox
-    label: Options
+    label: Cross-validation
     collapsed: true
     children:
       - type: TextBox
         name: cvNfolds
         label: CV folds
         format: number
-      - type: TextBox
-        name: cvTableRows
-        label: CV results to display
-        format: number
       - type: ComboBox
         name: errorMeasure
       - type: ComboBox
         name: errorMeasureWhich
-      - type: ComboBox
-        name: caseGLM
-      - type: CheckBox
-        name: NormEnt
-      - type: CheckBox
-        name: OLS
       - type: TextBox
-        name: seed
-        label: Seed
+        name: cvTableRows
+        label: CV results to display
         format: number
-        width: large
   - type: CollapseBox
     label: Save
     collapsed: true

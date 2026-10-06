@@ -9,10 +9,6 @@ items:
   - name: text
     title: Status
     type: Html
-    
-  - name: reference
-    title: GCEstim reference
-    type: Html
 
   - name: modelSummary
     title: Model Summary
@@ -25,11 +21,25 @@ items:
         title: Value
         type: text
   
+  - name: signalSupports
+    title: Signal Supports
+    type: Table
+    columns:
+      - name: term
+        title: Coefficient
+        type: text
+      - name: lower
+        title: Lower limit
+        type: number
+      - name: upper
+        title: Upper limit
+        type: number
+
   - name: plotCV
     title: Cross-validation error by support combination
     type: Image
     renderFun: .plotCV
-    visible: false
+    visible: (plotCV)
   
   - name: cvResults
     title: Cross-validation results
@@ -46,17 +56,14 @@ items:
       - name: alpha
         title: Noise weight
         type: number
-        format: zto
 
       - name: errorMeasure
-        title: Error
+        title: Error measure
         type: number
-        format: zto
 
       - name: cvMean
-        title: CV-error
+        title: Cross-validation error
         type: number
-        format: zto
 
       - name: convergence
         title: Converged
@@ -65,7 +72,6 @@ items:
       - name: time
         title: Time (s)
         type: number
-        format: zto
   
   - name: coefficients
     title: Coefficients
@@ -78,42 +84,23 @@ items:
       - name: estimate
         title: Estimate
         type: number
-        format: zto
-      
-      - name: ciLowerZ
-        title: CI Lower
-        type: number
-        format: zto
-        visible: (bootstrap == 0)
-
-      - name: ciUpperZ
-        title: CI Upper
-        type: number
-        format: zto
-        visible: (bootstrap == 0)
       
       - name: ciLower
-        title: Bootstrap CI Lower
+        title: Lower
         type: number
-        format: zto
-        visible: (bootstrap)
       
       - name: ciUpper
-        title: Bootstrap CI Upper
+        title: Upper
         type: number
-        format: zto
-        visible: (bootstrap)
       
       - name: se
         title: Std. Deviation
         type: number
-        format: zto
         visible: (bootstrap == 0)
 
       - name: z
         title: z value
         type: number
-        format: zto
         visible: (bootstrap == 0)
 
       - name: p
@@ -140,36 +127,42 @@ items:
     title: Supports vs prediction error
     type: Image
     renderFun: .plot2
-    visible: false
+    visible: (plot2 && supportSignalVectorN > 1)
 
   - name: plot3
     title: Supports vs estimates
     type: Image
     renderFun: .plot3
-    visible: false
+    visible: (plot3 && supportSignalVectorN > 1)
 
   - name: plot4
     title: Supports vs normalized entropy
     type: Image
     renderFun: .plot4
-    visible: false
+    visible: (plot4 && supportSignalVectorN > 1)
 
   - name: plot5
     title: Supports vs precision error
     type: Image
     renderFun: .plot5
-    visible: false
+    visible: (plot5 && supportSignalVectorN > 1)
 
   - name: plot6
     title: GCE reestimation vs prediction error
     type: Image
     renderFun: .plot6
-    visible: false
+    visible: (plot6 && twostepsN > 0)
 
   - name: plot7
     title: GCE reestimation vs precision error
     type: Image
     renderFun: .plot7
+    visible: (plot7 && twostepsN > 0)
+
+  - name: plotCombined
+    title: Selected model plots
+    type: Image
+    renderFun: .plotCombined
     visible: false
     
   - name: saveFitted

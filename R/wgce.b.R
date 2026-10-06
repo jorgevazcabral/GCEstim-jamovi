@@ -3,6 +3,40 @@ WGCEClass <- R6::R6Class(
   inherit = WGCEBase,
   private = list(
 
+    .init = function() {
+      pTable <- self$results$signalProbabilities
+      
+      coefTable <- self$results$coefficients
+      level <- format(100 * self$options$bootConfLevel, trim = TRUE)
+      
+      method <- if (isTRUE(self$options$bootstrap)) {
+        paste("bootstrap", self$options$bootCIMethod)
+      } else {
+        "asymptotic"
+      }
+      
+      ciTitle <- paste0(level, "% Confidence Interval (", method, ")")
+      coefTable$getColumn("ciLower")$setSuperTitle(ciTitle)
+      coefTable$getColumn("ciUpper")$setSuperTitle(ciTitle)
+      
+      if (isTRUE(self$options$bootstrap)) {
+        coefTable$setNote(
+          key = "bootstrapColumns",
+          note = "Asymptotic Std. Deviation, z, and p are hidden when bootstrap intervals are selected.",
+          init = TRUE
+        )
+      }
+      
+      for (j in seq_len(self$options$M)) {
+        pTable$addColumn(
+          name = paste0("p", j),
+          title = paste0("p_", j),
+          type = "number",
+          format = "zto"
+        )
+      }
+    },
+    
     .run = function() {
 
       escapeHTML <- function(x) {
@@ -10,13 +44,6 @@ WGCEClass <- R6::R6Class(
         x <- gsub("<", "&lt;", x, fixed = TRUE)
         x <- gsub(">", "&gt;", x, fixed = TRUE)
         x
-      }
-
-      showError <- function(message) {
-        self$results$text$setContent(paste0(
-          "<p style='color:red;'><b>Error:</b> ",
-          escapeHTML(message), "</p>"
-        ))
       }
 
       parseLimits <- function(input, label) {
@@ -34,9 +61,11 @@ WGCEClass <- R6::R6Class(
         values
       }
 
-      if (self$options$run == 0) {
+      self$results$text$setVisible(TRUE)
+      
+      if (!isTRUE(self$options$run)) {
         self$results$text$setContent(
-          "<p>Select variables and support limits, then press <b>Run model</b>.</p>"
+          "<p>Select variables and support limits, then select <b>Fit and update model</b>.</p>"
         )
         return()
       }
@@ -44,11 +73,10 @@ WGCEClass <- R6::R6Class(
       dep <- unlist(self$options$dep)
       covs <- unlist(self$options$covs)
       factors <- unlist(self$options$factors)
-
+      
       if (length(dep) != 1L ||
           (length(covs) == 0L && length(factors) == 0L)) {
-        showError("Select one dependent variable and at least one covariate or factor.")
-        return()
+        jmvcore::reject("Select one dependent variable and at least one covariate or factor.")
       }
 
       vars <- unique(c(dep, covs, factors))
@@ -56,8 +84,10 @@ WGCEClass <- R6::R6Class(
       data <- data[stats::complete.cases(data), , drop = FALSE]
 
       if (nrow(data) < 3L) {
-        showError("Not enough complete cases to estimate the model.")
-        return()
+        jmvcore::reject(
+          "This analysis requires at least 3 complete cases ({n} found).",
+          code = "too_few_cases", n = nrow(data)
+        )
       }
 
       for (f in factors)
@@ -71,21 +101,79 @@ WGCEClass <- R6::R6Class(
 
       X <- tryCatch(stats::model.matrix(form, data), error = function(e) e)
       if (inherits(X, "error")) {
-        showError(conditionMessage(X))
-        return()
+        jmvcore::reject("Model matrix: {message}", code = "model_matrix_failed",
+                        message = conditionMessage(X))
       }
       coefNames <- colnames(X)
       k <- length(coefNames)
 
       if (k == 0L) {
-        showError("The model has no coefficients.")
-        return()
+        jmvcore::reject("The model has no coefficients.")
       }
 
       if (self$options$M %% 2L != 1L ||
           self$options$J %% 2L != 1L) {
-        showError("Signal and noise support points must each be odd integers.")
-        return()
+        jmvcore::reject("Signal and noise support points must each be odd integers.")
+      }
+
+      signalPrior <- self$options$M
+      if (!isTRUE(self$options$uniformSignalPrior)) {
+        priorText <- trimws(self$options$signalPriorWeights)
+        priorParts <- trimws(strsplit(priorText, ",", fixed = TRUE)[[1]])
+        priorTokens <- gsub("[[:space:]]+", "", priorParts)
+        validToken <- "^[0-9]+(\\.[0-9]+)?(/[0-9]+(\\.[0-9]+)?)?$"
+
+        if (!nzchar(priorText) ||
+            length(priorTokens) != self$options$M ||
+            any(!grepl(validToken, priorTokens))) {
+          jmvcore::reject(paste0(
+            "Enter exactly ", self$options$M,
+            " positive signal prior probabilities as decimals or fractions, ",
+            "separated by commas."
+          ))
+        }
+
+        signalPrior <- vapply(priorTokens, function(token) {
+          pieces <- as.numeric(strsplit(token, "/", fixed = TRUE)[[1]])
+          if (length(pieces) == 1L) pieces[1L] else pieces[1L] / pieces[2L]
+        }, numeric(1))
+
+        if (any(!is.finite(signalPrior)) ||
+            any(signalPrior <= 0) ||
+            abs(sum(signalPrior) - 1) > 1e-6) {
+          jmvcore::reject("Signal prior probabilities must be positive and sum to 1.")
+        }
+        signalPrior <- signalPrior / sum(signalPrior)
+      }
+
+      noisePrior <- self$options$J
+      if (!isTRUE(self$options$uniformNoisePrior)) {
+        priorText <- trimws(self$options$noisePriorWeights)
+        priorParts <- trimws(strsplit(priorText, ",", fixed = TRUE)[[1]])
+        priorTokens <- gsub("[[:space:]]+", "", priorParts)
+        validToken <- "^[0-9]+(\\.[0-9]+)?(/[0-9]+(\\.[0-9]+)?)?$"
+
+        if (!nzchar(priorText) ||
+            length(priorTokens) != self$options$J ||
+            any(!grepl(validToken, priorTokens))) {
+          jmvcore::reject(paste0(
+            "Enter exactly ", self$options$J,
+            " positive noise prior probabilities as decimals or fractions, ",
+            "separated by commas."
+          ))
+        }
+
+        noisePrior <- vapply(priorTokens, function(token) {
+          pieces <- as.numeric(strsplit(token, "/", fixed = TRUE)[[1]])
+          if (length(pieces) == 1L) pieces[1L] else pieces[1L] / pieces[2L]
+        }, numeric(1))
+
+        if (any(!is.finite(noisePrior)) ||
+            any(noisePrior <= 0) ||
+            abs(sum(noisePrior) - 1) > 1e-6) {
+          jmvcore::reject("Noise prior probabilities must be positive and sum to 1.")
+        }
+        noisePrior <- noisePrior / sum(noisePrior)
       }
 
       limits <- tryCatch(list(
@@ -96,17 +184,16 @@ WGCEClass <- R6::R6Class(
       ), error = function(e) e)
 
       if (inherits(limits, "error")) {
-        showError(conditionMessage(limits))
-        return()
+        jmvcore::reject("{message}", code = "invalid_signal_limits",
+                        message = conditionMessage(limits))
       }
 
       if (!(length(limits$lower) %in% c(1L, k)) ||
           !(length(limits$upper) %in% c(1L, k))) {
-        showError(paste0(
+        jmvcore::reject(paste0(
           "Enter either one value or ", k, " values in each field. ",
           "Coefficient order: ", paste(coefNames, collapse = ", "), "."
         ))
-        return()
       }
 
       lower <- rep(limits$lower, length.out = k)
@@ -114,8 +201,7 @@ WGCEClass <- R6::R6Class(
 
       if (any(!is.finite(lower)) || any(!is.finite(upper)) ||
           any(lower >= upper)) {
-        showError("Each signal support must have a finite lower limit smaller than its upper limit.")
-        return()
+        jmvcore::reject("Each signal support must have a finite lower limit smaller than its upper limit.")
       }
 
       # A length-two vector shares its interval; a k-by-two matrix assigns
@@ -138,8 +224,7 @@ WGCEClass <- R6::R6Class(
       supportNoise <- NULL
       if (!self$options$supportNoise3sig) {
         if (self$options$supportNoiseMin >= self$options$supportNoiseMax) {
-          showError("Minimum noise support must be smaller than maximum noise support.")
-          return()
+          jmvcore::reject("Minimum noise support must be smaller than maximum noise support.")
         }
         supportNoise <- c(self$options$supportNoiseMin,
                           self$options$supportNoiseMax)
@@ -148,6 +233,7 @@ WGCEClass <- R6::R6Class(
       bootB <- if (self$options$bootstrap) self$options$bootB else 0L
 
       self$results$text$setContent("<p>Estimating W-GCE model...</p>")
+      private$.checkpoint()
       startTime <- Sys.time()
       warnings <- character()
 
@@ -160,9 +246,9 @@ WGCEClass <- R6::R6Class(
             errormeasure.which = "min",
             support.method = "standardized",
             support.signal = supportSignal,
-            support.signal.points = self$options$M,
+            support.signal.points = signalPrior,
             support.noise = supportNoise,
-            support.noise.points = self$options$J,
+            support.noise.points = noisePrior,
             weight = self$options$weight,
             twosteps.n = 0L,
             method = self$options$method,
@@ -181,8 +267,8 @@ WGCEClass <- R6::R6Class(
       )
 
       if (inherits(fit, "error")) {
-        showError(conditionMessage(fit))
-        return()
+        jmvcore::reject("Model estimation failed: {message}", code = "fit_failed",
+                        message = conditionMessage(fit))
       }
 
       if (self$options$saveFitted &&
@@ -222,6 +308,9 @@ WGCEClass <- R6::R6Class(
                round(elapsed %% 60, 1), " s")
       }
 
+      self$results$text$setContent("<p>Fit completed. Computing confidence intervals...</p>")
+      private$.checkpoint()
+
       ci <- tryCatch(
         if (self$options$bootstrap) {
           stats::confint(fit, level = self$options$bootConfLevel,
@@ -232,15 +321,18 @@ WGCEClass <- R6::R6Class(
         error = function(e) e
       )
       if (inherits(ci, "error")) {
-        showError(paste0("Confidence intervals: ", conditionMessage(ci)))
-        return()
+        jmvcore::reject("Confidence intervals: {message}", code = "ci_failed",
+                        message = conditionMessage(ci))
       }
 
       summ <- tryCatch(summary(fit), error = function(e) e)
       if (inherits(summ, "error")) {
-        showError(paste0("Model summary: ", conditionMessage(summ)))
-        return()
+        jmvcore::reject("Model summary: {message}", code = "summary_failed",
+                        message = conditionMessage(summ))
       }
+
+      self$results$text$setContent("<p>Confidence intervals completed. Filling tables...</p>")
+      private$.checkpoint()
 
       summaryTable <- self$results$modelSummary
       addMeasure <- function(key, label, value) {
@@ -256,7 +348,13 @@ WGCEClass <- R6::R6Class(
       ) paste0("[", lower[1], ", ", upper[1], "]") else
         "Different for each coefficient (see Signal Supports)")
       addMeasure("M", "Signal support points", self$options$M)
+      addMeasure("signalPrior", "Signal prior", if (
+        isTRUE(self$options$uniformSignalPrior)
+      ) "Uniform" else paste(signif(signalPrior, 6), collapse = ", "))
       addMeasure("J", "Noise support points", self$options$J)
+      addMeasure("noisePrior", "Noise prior", if (
+        isTRUE(self$options$uniformNoisePrior)
+      ) "Uniform" else paste(signif(noisePrior, 6), collapse = ", "))
       addMeasure("noise", "Noise support", if (
         self$options$supportNoise3sig
       ) {
@@ -297,10 +395,8 @@ WGCEClass <- R6::R6Class(
         coefTable$addRow(rowKey = term, values = list(
           term = term,
           estimate = coefs[i, "Estimate"],
-          ciLowerZ = if (!hasCI) ci[term, 1] else NA_real_,
-          ciUpperZ = if (!hasCI) ci[term, 2] else NA_real_,
-          ciLower = if (hasCI) ci[term, 1] else NA_real_,
-          ciUpper = if (hasCI) ci[term, 2] else NA_real_,
+          ciLower = ci[term, 1],
+          ciUpper = ci[term, 2],
           se = coefs[i, "Std. Deviation"],
           z = coefs[i, "z value"],
           p = coefs[i, "Pr(>|t|)"]
@@ -315,12 +411,7 @@ WGCEClass <- R6::R6Class(
       } else {
         pTable <- self$results$signalProbabilities
         pKeys <- paste0("p", seq_len(ncol(pMatrix)))
-        for (j in seq_len(ncol(pMatrix))) {
-          pTable$addColumn(
-            name = pKeys[j], title = paste0("p_", j),
-            type = "number", format = "zto"
-          )
-        }
+        
         pTerms <- rownames(pMatrix)
         if (is.null(pTerms)) pTerms <- coefNames
         for (i in seq_len(nrow(pMatrix))) {
@@ -333,6 +424,8 @@ WGCEClass <- R6::R6Class(
       }
 
       if (self$options$plot1) {
+        self$results$text$setContent("<p>Tables completed. Plotting...</p>")
+        private$.checkpoint()
         plot1 <- tryCatch(
           plot(fit, which = 1,
                ci.level = self$options$bootConfLevel,
@@ -346,22 +439,26 @@ WGCEClass <- R6::R6Class(
         self$results$plot1$setState(list(p = plot1))
       }
 
-      warningText <- if (length(warnings)) paste0(
-        "<p style='color:orange;'><b>Warning:</b> ",
-        escapeHTML(paste(unique(warnings), collapse = "; ")), "</p>"
-      ) else ""
-      self$results$text$setContent(paste0(
-        "<p><b>W-GCE linear model estimated successfully.</b></p>",
-        "<p><b>Computation time:</b> ", timeText, "</p>", warningText
-      ))
+      if (length(warnings)) {
+        warningNotice <- jmvcore::Notice$new(
+          options = self$options,
+          name = ".fitWarning",
+          type = jmvcore::NoticeType$WARNING
+        )
+        warningNotice$setContent(paste(unique(warnings), collapse = "; "))
+        self$results$insert(1, warningNotice)
+      }
+      
+      timeNotice <- jmvcore::Notice$new(
+        options = self$options,
+        name = ".fitTime",
+        type = jmvcore::NoticeType$INFO
+      )
+      timeNotice$setContent(paste0("Computation time: ", timeText))
+      self$results$insert(1, timeNotice)
+      
+      self$results$text$setVisible(FALSE)
 
-      self$results$reference$setContent(paste0(
-        "<p>Cabral, J. (2026). <i>GCEstim: Regression Coefficients ",
-        "Estimation Using the Generalized Cross Entropy</i>. ",
-        "R package version ",
-        as.character(utils::packageVersion("GCEstim")),
-        ". https://CRAN.R-project.org/package=GCEstim</p>"
-      ))
     },
 
     .plot1 = function(image, ggtheme, theme) {

@@ -3,6 +3,8 @@ name: WGCE
 jus: '3.0'
 compilerMode: tame
 children:
+  - type: CheckBox
+    name: run
   - type: VariableSupplier
     persistentItems: false
     stretchFactor: 1
@@ -41,10 +43,8 @@ children:
               - factor
   - type: CheckBox
     name: intercept
-  - type: ActionButton
-    name: run
   - type: CollapseBox
-    label: Signal support
+    label: Signal Support
     collapsed: false
     children:
       - type: Label
@@ -64,16 +64,32 @@ children:
       - type: TextBox
         name: M
         format: number
+      - type: CheckBox
+        name: uniformSignalPrior
+      - type: TextBox
+        name: signalPriorWeights
+        label: Signal prior probabilities (comma separated)
+        format: string
+        width: largest
+        enable: (!uniformSignalPrior)
   - type: CollapseBox
-    label: Noise support
+    label: Noise Support
     collapsed: false
     children:
       - type: TextBox
-        name: J
-        format: number
-      - type: TextBox
         name: weight
         format: number
+      - type: TextBox
+        name: J
+        format: number
+      - type: CheckBox
+        name: uniformNoisePrior
+      - type: TextBox
+        name: noisePriorWeights
+        label: Noise prior probabilities (comma separated)
+        format: string
+        width: largest
+        enable: (!uniformNoisePrior)
       - type: CheckBox
         name: supportNoise3sig
       - type: TextBox

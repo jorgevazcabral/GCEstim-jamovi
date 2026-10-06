@@ -4,13 +4,14 @@ title: W-GCE Linear Model
 menuGroup: GCEstim
 menuSubgroup: Regression
 menuTitle: W-GCE
-version: '1.0.0'
+version: '1.1.0'
 jas: '1.2'
 
 options:
   - name: run
-    title: Run model
-    type: Action
+    title: Fit and update model
+    type: Bool
+    default: false
 
   - name: data
     type: Data
@@ -28,7 +29,7 @@ options:
     type: Variables
 
   - name: intercept
-    title: Include intercept
+    title: Intercept
     type: Bool
     default: true
 
@@ -49,12 +50,32 @@ options:
     min: 3
     max: 99
 
+  - name: uniformSignalPrior
+    title: Uniform signal prior
+    type: Bool
+    default: true
+
+  - name: signalPriorWeights
+    title: Signal prior probabilities (comma separated)
+    type: String
+    default: '1/4, 1/2, 1/4'
+
   - name: J
     title: Noise support points
     type: Integer
     default: 3
     min: 3
     max: 99
+
+  - name: uniformNoisePrior
+    title: Uniform noise prior
+    type: Bool
+    default: true
+
+  - name: noisePriorWeights
+    title: Noise prior probabilities (comma separated)
+    type: String
+    default: '1/3, 1/3, 1/3'
 
   - name: weight
     title: Noise weight
@@ -64,7 +85,7 @@ options:
     max: 1
 
   - name: supportNoise3sig
-    title: Use 3 sigma noise support
+    title: 3 sigma noise support
     type: Bool
     default: true
 
@@ -82,18 +103,30 @@ options:
     title: Optimization method
     type: List
     options:
-      - dual.BFGS
-      - dual.lbfgsb3c
-      - dual.L-BFGS-B
-      - dual.lbfgs
-      - dual.CG
-      - dual.Rcgmin
-      - dual.bobyqa
-      - dual.newuoa
-      - dual.nlminb
-      - dual.nlm
-      - primal.solnl
-      - primal.solnp
+      - name: dual.BFGS
+        title: 'Dual: BFGS'
+      - name: dual.lbfgsb3c
+        title: 'Dual: lbfgsb3c'
+      - name: dual.L-BFGS-B
+        title: 'Dual: L-BFGS-B'
+      - name: dual.lbfgs
+        title: 'Dual: lbfgs'
+      - name: dual.CG
+        title: 'Dual: CG'
+      - name: dual.Rcgmin
+        title: 'Dual: Rcgmin'
+      - name: dual.bobyqa
+        title: 'Dual: bobyqa'
+      - name: dual.newuoa
+        title: 'Dual: newuoa'
+      - name: dual.nlminb
+        title: 'Dual: nlminb'
+      - name: dual.nlm
+        title: 'Dual: nlm'
+      - name: primal.solnl
+        title: 'Primal: solnl'
+      - name: primal.solnp
+        title: 'Primal: solnp'
     default: dual.BFGS
 
   - name: caseGLM
@@ -130,21 +163,26 @@ options:
     title: Bootstrap method
     type: List
     options:
-      - residuals
-      - cases
-      - wild
+      - name: residuals
+        title: 'Residual'
+      - name: cases
+        title: 'Case'
+      - name: wild
+        title: 'Wild'
     default: residuals
 
   - name: bootCIMethod
     title: Bootstrap confidence interval method
     type: List
     options:
-      - percentile
-      - basic
+      - name: percentile
+        title: 'Percentile'
+      - name: basic
+        title: 'Basic'
     default: percentile
 
   - name: OLS
-    title: Include OLS in plot
+    title: OLS comparison
     type: Bool
     default: false
 

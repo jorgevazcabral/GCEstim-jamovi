@@ -14,7 +14,11 @@ WGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             supportSignalLowers = "-10",
             supportSignalUppers = "10",
             M = 3,
+            uniformSignalPrior = TRUE,
+            signalPriorWeights = "1/4, 1/2, 1/4",
             J = 3,
+            uniformNoisePrior = TRUE,
+            noisePriorWeights = "1/3, 1/3, 1/3",
             weight = 0.5,
             supportNoise3sig = TRUE,
             supportNoiseMin = -10,
@@ -36,9 +40,10 @@ WGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 requiresData=TRUE,
                 ...)
 
-            private$..run <- jmvcore::OptionAction$new(
+            private$..run <- jmvcore::OptionBool$new(
                 "run",
-                run)
+                run,
+                default=FALSE)
             private$..dep <- jmvcore::OptionVariable$new(
                 "dep",
                 dep)
@@ -66,12 +71,28 @@ WGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 default=3,
                 min=3,
                 max=99)
+            private$..uniformSignalPrior <- jmvcore::OptionBool$new(
+                "uniformSignalPrior",
+                uniformSignalPrior,
+                default=TRUE)
+            private$..signalPriorWeights <- jmvcore::OptionString$new(
+                "signalPriorWeights",
+                signalPriorWeights,
+                default="1/4, 1/2, 1/4")
             private$..J <- jmvcore::OptionInteger$new(
                 "J",
                 J,
                 default=3,
                 min=3,
                 max=99)
+            private$..uniformNoisePrior <- jmvcore::OptionBool$new(
+                "uniformNoisePrior",
+                uniformNoisePrior,
+                default=TRUE)
+            private$..noisePriorWeights <- jmvcore::OptionString$new(
+                "noisePriorWeights",
+                noisePriorWeights,
+                default="1/3, 1/3, 1/3")
             private$..weight <- jmvcore::OptionNumber$new(
                 "weight",
                 weight,
@@ -173,7 +194,11 @@ WGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..supportSignalLowers)
             self$.addOption(private$..supportSignalUppers)
             self$.addOption(private$..M)
+            self$.addOption(private$..uniformSignalPrior)
+            self$.addOption(private$..signalPriorWeights)
             self$.addOption(private$..J)
+            self$.addOption(private$..uniformNoisePrior)
+            self$.addOption(private$..noisePriorWeights)
             self$.addOption(private$..weight)
             self$.addOption(private$..supportNoise3sig)
             self$.addOption(private$..supportNoiseMin)
@@ -201,7 +226,11 @@ WGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         supportSignalLowers = function() private$..supportSignalLowers$value,
         supportSignalUppers = function() private$..supportSignalUppers$value,
         M = function() private$..M$value,
+        uniformSignalPrior = function() private$..uniformSignalPrior$value,
+        signalPriorWeights = function() private$..signalPriorWeights$value,
         J = function() private$..J$value,
+        uniformNoisePrior = function() private$..uniformNoisePrior$value,
+        noisePriorWeights = function() private$..noisePriorWeights$value,
         weight = function() private$..weight$value,
         supportNoise3sig = function() private$..supportNoise3sig$value,
         supportNoiseMin = function() private$..supportNoiseMin$value,
@@ -228,7 +257,11 @@ WGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..supportSignalLowers = NA,
         ..supportSignalUppers = NA,
         ..M = NA,
+        ..uniformSignalPrior = NA,
+        ..signalPriorWeights = NA,
         ..J = NA,
+        ..uniformNoisePrior = NA,
+        ..noisePriorWeights = NA,
         ..weight = NA,
         ..supportNoise3sig = NA,
         ..supportNoiseMin = NA,
@@ -253,7 +286,6 @@ WGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     inherit = jmvcore::Group,
     active = list(
         text = function() private$.items[["text"]],
-        reference = function() private$.items[["reference"]],
         modelSummary = function() private$.items[["modelSummary"]],
         signalSupports = function() private$.items[["signalSupports"]],
         coefficients = function() private$.items[["coefficients"]],
@@ -275,10 +307,6 @@ WGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="text",
                 title="Status"))
-            self$add(jmvcore::Html$new(
-                options=options,
-                name="reference",
-                title="GCEstim reference"))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="modelSummary",
@@ -304,13 +332,11 @@ WGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="lower", 
                         `title`="Lower limit", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="upper", 
                         `title`="Upper limit", 
-                        `type`="number", 
-                        `format`="zto"))))
+                        `type`="number"))))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="coefficients",
@@ -323,43 +349,24 @@ WGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="estimate", 
                         `title`="Estimate", 
-                        `type`="number", 
-                        `format`="zto"),
-                    list(
-                        `name`="ciLowerZ", 
-                        `title`="CI Lower", 
-                        `type`="number", 
-                        `format`="zto", 
-                        `visible`="(bootstrap == 0)"),
-                    list(
-                        `name`="ciUpperZ", 
-                        `title`="CI Upper", 
-                        `type`="number", 
-                        `format`="zto", 
-                        `visible`="(bootstrap == 0)"),
+                        `type`="number"),
                     list(
                         `name`="ciLower", 
-                        `title`="Bootstrap CI Lower", 
-                        `type`="number", 
-                        `format`="zto", 
-                        `visible`="(bootstrap)"),
+                        `title`="Lower", 
+                        `type`="number"),
                     list(
                         `name`="ciUpper", 
-                        `title`="Bootstrap CI Upper", 
-                        `type`="number", 
-                        `format`="zto", 
-                        `visible`="(bootstrap)"),
+                        `title`="Upper", 
+                        `type`="number"),
                     list(
                         `name`="se", 
                         `title`="Std. Deviation", 
                         `type`="number", 
-                        `format`="zto", 
                         `visible`="(bootstrap == 0)"),
                     list(
                         `name`="z", 
                         `title`="z value", 
                         `type`="number", 
-                        `format`="zto", 
                         `visible`="(bootstrap == 0)"),
                     list(
                         `name`="p", 
@@ -413,7 +420,7 @@ WGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "GCEstimjmv",
                 name = "WGCE",
-                version = c(1,0,0),
+                version = c(1,1,0),
                 options = options,
                 results = WGCEResults$new(options=options),
                 data = data,
@@ -438,7 +445,11 @@ WGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param supportSignalLowers .
 #' @param supportSignalUppers .
 #' @param M .
+#' @param uniformSignalPrior .
+#' @param signalPriorWeights .
 #' @param J .
+#' @param uniformNoisePrior .
+#' @param noisePriorWeights .
 #' @param weight .
 #' @param supportNoise3sig .
 #' @param supportNoiseMin .
@@ -456,7 +467,6 @@ WGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
-#'   \code{results$reference} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$modelSummary} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$signalSupports} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$coefficients} \tab \tab \tab \tab \tab a table \cr
@@ -484,7 +494,11 @@ WGCE <- function(
     supportSignalLowers = "-10",
     supportSignalUppers = "10",
     M = 3,
+    uniformSignalPrior = TRUE,
+    signalPriorWeights = "1/4, 1/2, 1/4",
     J = 3,
+    uniformNoisePrior = TRUE,
+    noisePriorWeights = "1/3, 1/3, 1/3",
     weight = 0.5,
     supportNoise3sig = TRUE,
     supportNoiseMin = -10,
@@ -523,7 +537,11 @@ WGCE <- function(
         supportSignalLowers = supportSignalLowers,
         supportSignalUppers = supportSignalUppers,
         M = M,
+        uniformSignalPrior = uniformSignalPrior,
+        signalPriorWeights = signalPriorWeights,
         J = J,
+        uniformNoisePrior = uniformNoisePrior,
+        noisePriorWeights = noisePriorWeights,
         weight = weight,
         supportNoise3sig = supportNoise3sig,
         supportNoiseMin = supportNoiseMin,

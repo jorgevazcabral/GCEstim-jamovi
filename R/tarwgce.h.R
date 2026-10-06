@@ -55,9 +55,10 @@ TARWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 requiresData=TRUE,
                 ...)
 
-            private$..run <- jmvcore::OptionAction$new(
+            private$..run <- jmvcore::OptionBool$new(
                 "run",
-                run)
+                run,
+                default=FALSE)
             private$..dep <- jmvcore::OptionVariable$new(
                 "dep",
                 dep)
@@ -193,7 +194,8 @@ TARWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..bootB <- jmvcore::OptionInteger$new(
                 "bootB",
                 bootB,
-                default=100)
+                default=100,
+                min=10)
             private$..bootMethod <- jmvcore::OptionList$new(
                 "bootMethod",
                 bootMethod,
@@ -424,8 +426,8 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     inherit = jmvcore::Group,
     active = list(
         text = function() private$.items[["text"]],
-        reference = function() private$.items[["reference"]],
         modelSummary = function() private$.items[["modelSummary"]],
+        signalSupports = function() private$.items[["signalSupports"]],
         plotCV = function() private$.items[["plotCV"]],
         cvResults = function() private$.items[["cvResults"]],
         plotRidge = function() private$.items[["plotRidge"]],
@@ -438,6 +440,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         plot5 = function() private$.items[["plot5"]],
         plot6 = function() private$.items[["plot6"]],
         plot7 = function() private$.items[["plot7"]],
+        plotCombined = function() private$.items[["plotCombined"]],
         saveFitted = function() private$.items[["saveFitted"]],
         saveResiduals = function() private$.items[["saveResiduals"]],
         saveW = function() private$.items[["saveW"]]),
@@ -454,10 +457,6 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="text",
                 title="Status"))
-            self$add(jmvcore::Html$new(
-                options=options,
-                name="reference",
-                title="GCEstim reference"))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="modelSummary",
@@ -471,12 +470,29 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `name`="value", 
                         `title`="Value", 
                         `type`="text"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="signalSupports",
+                title="Signal Supports",
+                columns=list(
+                    list(
+                        `name`="term", 
+                        `title`="Coefficient", 
+                        `type`="text"),
+                    list(
+                        `name`="lower", 
+                        `title`="Lower limit", 
+                        `type`="number"),
+                    list(
+                        `name`="upper", 
+                        `title`="Upper limit", 
+                        `type`="number"))))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plotCV",
                 title="Cross-validation error by support combination",
                 renderFun=".plotCV",
-                visible=FALSE))
+                visible="(plotCV)"))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="cvResults",
@@ -493,18 +509,15 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="alpha", 
                         `title`="Noise weight", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="errorMeasure", 
-                        `title`="Error", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `title`="Error measure", 
+                        `type`="number"),
                     list(
                         `name`="cvMean", 
-                        `title`="CV-error", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `title`="Cross-validation error", 
+                        `type`="number"),
                     list(
                         `name`="convergence", 
                         `title`="Converged", 
@@ -512,8 +525,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="time", 
                         `title`="Time (s)", 
-                        `type`="number", 
-                        `format`="zto"))))
+                        `type`="number"))))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plotRidge",
@@ -532,43 +544,24 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="estimate", 
                         `title`="Estimate", 
-                        `type`="number", 
-                        `format`="zto"),
-                    list(
-                        `name`="ciLowerZ", 
-                        `title`="CI Lower", 
-                        `type`="number", 
-                        `format`="zto", 
-                        `visible`="(bootstrap == 0)"),
-                    list(
-                        `name`="ciUpperZ", 
-                        `title`="CI Upper", 
-                        `type`="number", 
-                        `format`="zto", 
-                        `visible`="(bootstrap == 0)"),
+                        `type`="number"),
                     list(
                         `name`="ciLower", 
-                        `title`="Bootstrap CI Lower", 
-                        `type`="number", 
-                        `format`="zto", 
-                        `visible`="(bootstrap)"),
+                        `title`="Lower", 
+                        `type`="number"),
                     list(
                         `name`="ciUpper", 
-                        `title`="Bootstrap CI Upper", 
-                        `type`="number", 
-                        `format`="zto", 
-                        `visible`="(bootstrap)"),
+                        `title`="Upper", 
+                        `type`="number"),
                     list(
                         `name`="se", 
                         `title`="Std. Deviation", 
                         `type`="number", 
-                        `format`="zto", 
                         `visible`="(bootstrap == 0)"),
                     list(
                         `name`="z", 
-                        `title`="z value", 
+                        `title`="z", 
                         `type`="number", 
-                        `format`="zto", 
                         `visible`="(bootstrap == 0)"),
                     list(
                         `name`="p", 
@@ -596,36 +589,42 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="plot2",
                 title="Supports vs prediction error",
                 renderFun=".plot2",
-                visible=FALSE))
+                visible="(plot2 && supportSignalVectorN > 1)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot3",
                 title="Supports vs estimates",
                 renderFun=".plot3",
-                visible=FALSE))
+                visible="(plot3 && supportSignalVectorN > 1)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot4",
                 title="Supports vs normalized entropy",
                 renderFun=".plot4",
-                visible=FALSE))
+                visible="(plot4 && supportSignalVectorN > 1)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot5",
                 title="Supports vs precision error",
                 renderFun=".plot5",
-                visible=FALSE))
+                visible="(plot5 && supportSignalVectorN > 1)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot6",
                 title="GCE reestimation vs prediction error",
                 renderFun=".plot6",
-                visible=FALSE))
+                visible="(plot6 && twostepsN > 0)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot7",
                 title="GCE reestimation vs precision error",
                 renderFun=".plot7",
+                visible="(plot7 && twostepsN > 0)"))
+            self$add(jmvcore::Image$new(
+                options=options,
+                name="plotCombined",
+                title="Selected model plots",
+                renderFun=".plotCombined",
                 visible=FALSE))
             self$add(jmvcore::Output$new(
                 options=options,
@@ -720,8 +719,8 @@ TARWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
-#'   \code{results$reference} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$modelSummary} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$signalSupports} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$plotCV} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$cvResults} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$plotRidge} \tab \tab \tab \tab \tab an image \cr
@@ -734,6 +733,7 @@ TARWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$plot5} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plot6} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plot7} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$plotCombined} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$saveFitted} \tab \tab \tab \tab \tab an output \cr
 #'   \code{results$saveResiduals} \tab \tab \tab \tab \tab an output \cr
 #'   \code{results$saveW} \tab \tab \tab \tab \tab an output \cr
