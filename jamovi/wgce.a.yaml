@@ -127,19 +127,7 @@ options:
         title: 'Primal: solnl'
       - name: primal.solnp
         title: 'Primal: solnp'
-    default: dual.BFGS
-
-  - name: caseGLM
-    title: General linear model case
-    type: List
-    options:
-      - title: Data
-        name: D
-      - title: Moment
-        name: M
-      - title: Normed moment
-        name: NM
-    default: D
+    default: dual.lbfgsb3c
 
   - name: bootConfLevel
     title: Confidence level

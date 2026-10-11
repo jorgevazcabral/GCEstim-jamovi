@@ -6,6 +6,46 @@ refs:
       - GCEstim
       
 items:
+  - name: fitCache
+    title: Fitted model cache
+    type: Table
+    visible: false
+    columns:
+      - name: value
+        title: Value
+        type: text
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - M
+      - J
+      - weight
+      - ridgeSignalSupport
+      - noiseSupportMethod
+      - ridgeLambdaMin
+      - ridgeLambdaMax
+      - ridgeLambdaN
+      - supportSignal
+      - supportSignalVectorN
+      - supportSignalVectorMin
+      - supportSignalVectorMax
+      - cvNfolds
+      - errorMeasure
+      - errorMeasureWhich
+      - method
+      - twostepsN
+      - OLS
+      - seed
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - bootConfLevel
+
   - name: text
     title: Status
     type: Html
@@ -38,12 +78,77 @@ items:
   - name: plotCV
     title: Cross-validation error by support combination
     type: Image
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - M
+      - J
+      - weight
+      - ridgeSignalSupport
+      - noiseSupportMethod
+      - ridgeLambdaMin
+      - ridgeLambdaMax
+      - ridgeLambdaN
+      - supportSignal
+      - supportSignalVectorN
+      - supportSignalVectorMin
+      - supportSignalVectorMax
+      - cvNfolds
+      - errorMeasure
+      - errorMeasureWhich
+      - method
+      - twostepsN
+      - OLS
+      - seed
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - bootConfLevel
+      - plotCV
     renderFun: .plotCV
     visible: (plotCV)
   
   - name: cvResults
     title: Cross-validation results
     type: Table
+    rows: (min(cvTableRows, length(unique(as.numeric(strsplit(M, ",")[[1]]))) * length(unique(as.numeric(strsplit(J, ",")[[1]]))) * length(unique(as.numeric(strsplit(weight, ",")[[1]])))))
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - M
+      - J
+      - weight
+      - ridgeSignalSupport
+      - noiseSupportMethod
+      - ridgeLambdaMin
+      - ridgeLambdaMax
+      - ridgeLambdaN
+      - supportSignal
+      - supportSignalVectorN
+      - supportSignalVectorMin
+      - supportSignalVectorMax
+      - cvNfolds
+      - errorMeasure
+      - errorMeasureWhich
+      - method
+      - twostepsN
+      - OLS
+      - seed
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - bootConfLevel
+      - cvTableRows
     columns:
       - name: signalPoints
         title: Signal support points
@@ -76,6 +181,38 @@ items:
   - name: plotRidge
     title: Ridge trace
     type: Image
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - M
+      - J
+      - weight
+      - ridgeSignalSupport
+      - noiseSupportMethod
+      - ridgeLambdaMin
+      - ridgeLambdaMax
+      - ridgeLambdaN
+      - supportSignal
+      - supportSignalVectorN
+      - supportSignalVectorMin
+      - supportSignalVectorMax
+      - cvNfolds
+      - errorMeasure
+      - errorMeasureWhich
+      - method
+      - twostepsN
+      - OLS
+      - seed
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - bootConfLevel
+      - plotRidge
     renderFun: .plotRidge
     visible: (plotRidge)  
     
@@ -126,50 +263,272 @@ items:
   - name: plot1
     title: Estimates and confidence intervals
     type: Image
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - M
+      - J
+      - weight
+      - ridgeSignalSupport
+      - noiseSupportMethod
+      - ridgeLambdaMin
+      - ridgeLambdaMax
+      - ridgeLambdaN
+      - supportSignal
+      - supportSignalVectorN
+      - supportSignalVectorMin
+      - supportSignalVectorMax
+      - cvNfolds
+      - errorMeasure
+      - errorMeasureWhich
+      - method
+      - twostepsN
+      - OLS
+      - seed
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - bootConfLevel
+      - plot1
     renderFun: .plot1
     visible: (plot1)
 
   - name: plot2
     title: Supports vs prediction error
     type: Image
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - M
+      - J
+      - weight
+      - ridgeSignalSupport
+      - noiseSupportMethod
+      - ridgeLambdaMin
+      - ridgeLambdaMax
+      - ridgeLambdaN
+      - supportSignal
+      - supportSignalVectorN
+      - supportSignalVectorMin
+      - supportSignalVectorMax
+      - cvNfolds
+      - errorMeasure
+      - errorMeasureWhich
+      - method
+      - twostepsN
+      - OLS
+      - seed
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - bootConfLevel
+      - plot2
+      - NormEnt
     renderFun: .plot2
     visible: (plot2 && supportSignalVectorN > 1)
 
   - name: plot3
     title: Supports vs estimates
     type: Image
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - M
+      - J
+      - weight
+      - ridgeSignalSupport
+      - noiseSupportMethod
+      - ridgeLambdaMin
+      - ridgeLambdaMax
+      - ridgeLambdaN
+      - supportSignal
+      - supportSignalVectorN
+      - supportSignalVectorMin
+      - supportSignalVectorMax
+      - cvNfolds
+      - errorMeasure
+      - errorMeasureWhich
+      - method
+      - twostepsN
+      - OLS
+      - seed
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - bootConfLevel
+      - plot3
     renderFun: .plot3
     visible: (plot3 && supportSignalVectorN > 1)
 
   - name: plot4
     title: Supports vs normalized entropy
     type: Image
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - M
+      - J
+      - weight
+      - ridgeSignalSupport
+      - noiseSupportMethod
+      - ridgeLambdaMin
+      - ridgeLambdaMax
+      - ridgeLambdaN
+      - supportSignal
+      - supportSignalVectorN
+      - supportSignalVectorMin
+      - supportSignalVectorMax
+      - cvNfolds
+      - errorMeasure
+      - errorMeasureWhich
+      - method
+      - twostepsN
+      - OLS
+      - seed
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - bootConfLevel
+      - plot4
     renderFun: .plot4
     visible: (plot4 && supportSignalVectorN > 1)
 
   - name: plot5
     title: Supports vs precision error
     type: Image
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - M
+      - J
+      - weight
+      - ridgeSignalSupport
+      - noiseSupportMethod
+      - ridgeLambdaMin
+      - ridgeLambdaMax
+      - ridgeLambdaN
+      - supportSignal
+      - supportSignalVectorN
+      - supportSignalVectorMin
+      - supportSignalVectorMax
+      - cvNfolds
+      - errorMeasure
+      - errorMeasureWhich
+      - method
+      - twostepsN
+      - OLS
+      - seed
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - bootConfLevel
+      - plot5
+      - NormEnt
+      - trueCoef
     renderFun: .plot5
     visible: (plot5 && supportSignalVectorN > 1)
 
   - name: plot6
     title: GCE reestimation vs prediction error
     type: Image
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - M
+      - J
+      - weight
+      - ridgeSignalSupport
+      - noiseSupportMethod
+      - ridgeLambdaMin
+      - ridgeLambdaMax
+      - ridgeLambdaN
+      - supportSignal
+      - supportSignalVectorN
+      - supportSignalVectorMin
+      - supportSignalVectorMax
+      - cvNfolds
+      - errorMeasure
+      - errorMeasureWhich
+      - method
+      - twostepsN
+      - OLS
+      - seed
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - bootConfLevel
+      - plot6
     renderFun: .plot6
     visible: (plot6 && twostepsN > 0)
 
   - name: plot7
     title: GCE reestimation vs precision error
     type: Image
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - M
+      - J
+      - weight
+      - ridgeSignalSupport
+      - noiseSupportMethod
+      - ridgeLambdaMin
+      - ridgeLambdaMax
+      - ridgeLambdaN
+      - supportSignal
+      - supportSignalVectorN
+      - supportSignalVectorMin
+      - supportSignalVectorMax
+      - cvNfolds
+      - errorMeasure
+      - errorMeasureWhich
+      - method
+      - twostepsN
+      - OLS
+      - seed
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - bootConfLevel
+      - plot7
+      - trueCoef
     renderFun: .plot7
     visible: (plot7 && twostepsN > 0)
-
-  - name: plotCombined
-    title: Selected model plots
-    type: Image
-    renderFun: .plotCombined
-    visible: false
     
   - name: saveFitted
     type: Output

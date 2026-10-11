@@ -23,8 +23,7 @@ WGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             supportNoise3sig = TRUE,
             supportNoiseMin = -10,
             supportNoiseMax = 10,
-            method = "dual.BFGS",
-            caseGLM = "D",
+            method = "dual.lbfgsb3c",
             bootConfLevel = 0.95,
             bootstrap = FALSE,
             bootB = 100,
@@ -127,15 +126,7 @@ WGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "dual.nlm",
                     "primal.solnl",
                     "primal.solnp"),
-                default="dual.BFGS")
-            private$..caseGLM <- jmvcore::OptionList$new(
-                "caseGLM",
-                caseGLM,
-                options=list(
-                    "D",
-                    "M",
-                    "NM"),
-                default="D")
+                default="dual.lbfgsb3c")
             private$..bootConfLevel <- jmvcore::OptionNumber$new(
                 "bootConfLevel",
                 bootConfLevel,
@@ -204,7 +195,6 @@ WGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..supportNoiseMin)
             self$.addOption(private$..supportNoiseMax)
             self$.addOption(private$..method)
-            self$.addOption(private$..caseGLM)
             self$.addOption(private$..bootConfLevel)
             self$.addOption(private$..bootstrap)
             self$.addOption(private$..bootB)
@@ -236,7 +226,6 @@ WGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         supportNoiseMin = function() private$..supportNoiseMin$value,
         supportNoiseMax = function() private$..supportNoiseMax$value,
         method = function() private$..method$value,
-        caseGLM = function() private$..caseGLM$value,
         bootConfLevel = function() private$..bootConfLevel$value,
         bootstrap = function() private$..bootstrap$value,
         bootB = function() private$..bootB$value,
@@ -267,7 +256,6 @@ WGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..supportNoiseMin = NA,
         ..supportNoiseMax = NA,
         ..method = NA,
-        ..caseGLM = NA,
         ..bootConfLevel = NA,
         ..bootstrap = NA,
         ..bootB = NA,
@@ -455,7 +443,6 @@ WGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param supportNoiseMin .
 #' @param supportNoiseMax .
 #' @param method .
-#' @param caseGLM .
 #' @param bootConfLevel .
 #' @param bootstrap .
 #' @param bootB .
@@ -503,8 +490,7 @@ WGCE <- function(
     supportNoise3sig = TRUE,
     supportNoiseMin = -10,
     supportNoiseMax = 10,
-    method = "dual.BFGS",
-    caseGLM = "D",
+    method = "dual.lbfgsb3c",
     bootConfLevel = 0.95,
     bootstrap = FALSE,
     bootB = 100,
@@ -547,7 +533,6 @@ WGCE <- function(
         supportNoiseMin = supportNoiseMin,
         supportNoiseMax = supportNoiseMax,
         method = method,
-        caseGLM = caseGLM,
         bootConfLevel = bootConfLevel,
         bootstrap = bootstrap,
         bootB = bootB,

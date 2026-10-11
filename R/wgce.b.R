@@ -35,16 +35,40 @@ WGCEClass <- R6::R6Class(
           format = "zto"
         )
       }
+      
+      summaryRows <- c(
+        formula = "Formula",
+        n = "Complete cases",
+        supportMode = "Signal support",
+        M = "Signal support points",
+        signalPrior = "Signal prior",
+        J = "Noise support points",
+        noisePrior = "Noise prior",
+        noise = "Noise support",
+        weight = "Noise weight",
+        method = "Optimization method",
+        ciType = "Confidence interval type",
+        ciLevel = "Confidence level"
+      )
+      
+      if (isTRUE(self$options$bootstrap)) {
+        summaryRows <- c(
+          summaryRows,
+          bootB = "Bootstrap samples",
+          bootMethod = "Bootstrap resampling method"
+        )
+      }
+      
+      summaryTable <- self$results$modelSummary
+      for (key in names(summaryRows)) {
+        summaryTable$addRow(
+          rowKey = key,
+          values = list(measure = summaryRows[[key]])
+        )
+      }
     },
     
     .run = function() {
-
-      escapeHTML <- function(x) {
-        x <- gsub("&", "&amp;", as.character(x), fixed = TRUE)
-        x <- gsub("<", "&lt;", x, fixed = TRUE)
-        x <- gsub(">", "&gt;", x, fixed = TRUE)
-        x
-      }
 
       parseLimits <- function(input, label) {
         input <- trimws(input)
@@ -93,11 +117,15 @@ WGCEClass <- R6::R6Class(
       for (f in factors)
         data[[f]] <- droplevels(as.factor(data[[f]]))
 
-      form <- stats::reformulate(
-        termlabels = c(covs, factors),
-        response = dep,
-        intercept = self$options$intercept
+      formStr <- jmvcore::constructFormula(
+        dep = dep,
+        terms = c(covs, factors)
       )
+      
+      if (!isTRUE(self$options$intercept))
+        formStr <- paste(formStr, "- 1")
+      
+      form <- stats::as.formula(formStr)
 
       X <- tryCatch(stats::model.matrix(form, data), error = function(e) e)
       if (inherits(X, "error")) {
@@ -204,8 +232,6 @@ WGCEClass <- R6::R6Class(
         jmvcore::reject("Each signal support must have a finite lower limit smaller than its upper limit.")
       }
 
-      # A length-two vector shares its interval; a k-by-two matrix assigns
-      # one interval to each column of the model matrix, including intercept.
       supportSignal <- if (length(limits$lower) == 1L &&
                            length(limits$upper) == 1L) {
         c(lower[1], upper[1])
@@ -252,7 +278,7 @@ WGCEClass <- R6::R6Class(
             weight = self$options$weight,
             twosteps.n = 0L,
             method = self$options$method,
-            caseGLM = self$options$caseGLM,
+            caseGLM = "D",
             boot.B = bootB,
             boot.method = self$options$bootMethod,
             seed = self$options$seed,
@@ -285,16 +311,20 @@ WGCEClass <- R6::R6Class(
 
       if (self$options$saveW) {
         w <- as.matrix(fit$w)
-        if (self$options$caseGLM != "D") {
-          warnings <- c(warnings,
-                        "Noise probabilities cannot be saved as observation columns for the moment-based GLM cases.")
-        } else if (nrow(w) != nrow(data) || ncol(w) != self$options$J) {
-          warnings <- c(warnings,
-                        "Noise probabilities do not match the expected observation and support-point dimensions.")
+        
+        if (nrow(w) != nrow(data) || ncol(w) != self$options$J) {
+          warnings <- c(
+            warnings,
+            "Noise probabilities do not match the expected observation and support-point dimensions."
+          )
         } else if (self$results$saveW$isNotFilled()) {
           self$results$saveW$setRowNums(rownames(data))
+          
           for (j in seq_len(ncol(w))) {
-            self$results$saveW$setValues(as.numeric(w[, j]), index = j)
+            self$results$saveW$setValues(
+              as.numeric(w[, j]),
+              index = j
+            )
           }
         }
       }
@@ -336,9 +366,10 @@ WGCEClass <- R6::R6Class(
 
       summaryTable <- self$results$modelSummary
       addMeasure <- function(key, label, value) {
-        summaryTable$addRow(rowKey = key,
-                            values = list(measure = label,
-                                          value = as.character(value)))
+        summaryTable$setRow(
+          rowKey = key,
+          values = list(value = as.character(value))
+        )
       }
 
       addMeasure("formula", "Formula", paste(deparse(form), collapse = " "))
@@ -359,37 +390,57 @@ WGCEClass <- R6::R6Class(
         self$options$supportNoise3sig
       ) {
         noiseResponse <- as.numeric(data[[dep]])
-        if (self$options$caseGLM %in% c("M", "NM")) {
-          noiseResponse <- as.numeric(crossprod(X, noiseResponse))
-          if (self$options$caseGLM == "NM")
-            noiseResponse <- noiseResponse / nrow(X)
-        }
         noiseLimit <- 3 * stats::sd(noiseResponse)
+        
         paste0(
           "Automatic (3 sigma): [",
           format(signif(-noiseLimit, 6), trim = TRUE), ", ",
           format(signif(noiseLimit, 6), trim = TRUE), "]"
         )
-      } else paste0(
-        "[", self$options$supportNoiseMin, ", ",
-        self$options$supportNoiseMax, "]"
-      ))
+      } else {
+        paste0(
+          "[", self$options$supportNoiseMin, ", ",
+          self$options$supportNoiseMax, "]"
+        )
+      })
       addMeasure("weight", "Noise weight", self$options$weight)
-      addMeasure("method", "Optimization method", self$options$method)
-      addMeasure("case", "GLM case", self$options$caseGLM)
-      addMeasure("boot", "Bootstrap", if (
-        self$options$bootstrap
-      ) "Yes" else "No")
+      
+      methodLabel <- sub("^dual\\.", "Dual: ", self$options$method)
+      methodLabel <- sub("^primal\\.", "Primal: ", methodLabel)
+      addMeasure("method", "Optimization method", methodLabel)
+      
+      addMeasure("ciType", "Confidence interval type",
+        if (self$options$bootstrap) {
+          paste(
+            "Bootstrap",
+            c(percentile = "percentile",
+              basic = "basic")[[self$options$bootCIMethod]]
+          )
+        } else {
+          "Asymptotic normal"
+        }
+      )
+      
+      addMeasure(
+        "ciLevel", "Confidence level",
+        paste0(100 * self$options$bootConfLevel, "%")
+      )
+      
       if (self$options$bootstrap) {
         addMeasure("bootB", "Bootstrap samples", self$options$bootB)
-        addMeasure("bootMethod", "Bootstrap method", self$options$bootMethod)
+        addMeasure(
+          "bootMethod",
+          "Bootstrap resampling method",
+          c(
+            residuals = "Residual",
+            cases = "Case",
+            wild = "Wild"
+          )[[self$options$bootMethod]]
+        )
       }
-      addMeasure("ciLevel", "Confidence level",
-                 paste0(100 * self$options$bootConfLevel, "%"))
 
       coefs <- summ$coefficients
       coefTable <- self$results$coefficients
-      hasCI <- isTRUE(self$options$bootstrap)
       for (i in seq_len(nrow(coefs))) {
         term <- rownames(coefs)[i]
         coefTable$addRow(rowKey = term, values = list(
@@ -463,12 +514,12 @@ WGCEClass <- R6::R6Class(
 
     .plot1 = function(image, ggtheme, theme) {
       p <- image$state$p
-      if (is.null(p)) {
-        graphics::plot.new()
-        graphics::text(0.5, 0.5, "Plot could not be generated.")
-      } else {
-        print(p)
-      }
+      
+      if (is.null(p))
+        return(FALSE)
+      
+      print(p)
+      TRUE
     }
   )
 )

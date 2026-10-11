@@ -24,6 +24,54 @@ TASWGCEClass <- R6::R6Class(
           init = TRUE
         )
       }
+      
+      summaryRows <- c(
+        formula = "Formula",
+        n = "Complete cases",
+        cvNfolds = "Cross-validation folds",
+        errorMeasure = "Prediction-error measure",
+        errorMeasureWhich = "Selection rule",
+        seed = "Seed",
+        method = "Method",
+        supportMethod = "Support method",
+        signalSupportSpecification = "Signal support specification",
+        noiseSupportMethod = "Noise support specification",
+        supportSignalVectorN = "Number of support spaces",
+        M = "Candidate signal support points",
+        J = "Candidate noise support points",
+        weight = "Candidate noise weight values",
+        twostepsN = "Post-GCE re-estimations",
+        ciType = "Confidence interval type",
+        ciLevel = "Confidence level"
+      )
+      
+      if (isTRUE(self$options$bootstrap)) {
+        summaryRows <- c(
+          summaryRows,
+          bootB = "Bootstrap samples",
+          bootMethod = "Bootstrap resampling method"
+        )
+      }
+      
+      weightValues <- suppressWarnings(as.numeric(
+        trimws(strsplit(self$options$weight, ",", fixed = TRUE)[[1L]])
+      ))
+      weightValues <- unique(weightValues[is.finite(weightValues)])
+      self$results$plotCV$setSize(
+        400,
+        160 + 140 * max(1L, length(weightValues))
+      )
+
+      summaryTable <- self$results$modelSummary
+      for (key in names(summaryRows)) {
+        if (!(key %in% unlist(summaryTable$rowKeys))) {
+          summaryTable$addRow(
+            rowKey = key,
+            values = list(measure = summaryRows[[key]])
+          )
+        }
+      }
+      
     },
     
     .run = function() {
@@ -67,49 +115,26 @@ TASWGCEClass <- R6::R6Class(
       Mvalues <- unique(parseNumericVector(self$options$M))
       cvPlotAvailable <- length(Mvalues) > 1L
       
-      selectedMainPlots <- c(
-        self$options$plot1,
-        self$options$plot2 && supportGridAvailable,
-        self$options$plot3 && supportGridAvailable,
-        self$options$plot4 && supportGridAvailable,
-        self$options$plot5 && supportGridAvailable,
-        self$options$plot6 && reestimationPlotsAvailable,
-        self$options$plot7 && reestimationPlotsAvailable
-      )
-
-      combineMainPlots <-
-        sum(selectedMainPlots) +
-        as.integer(isTRUE(self$options$plotCV) && cvPlotAvailable) > 1L
-
-      self$results$plotCombined$setVisible(combineMainPlots)
-      self$results$plot1$setVisible(
-        isTRUE(self$options$plot1) && !combineMainPlots
-      )
-      
+      self$results$plot1$setVisible(isTRUE(self$options$plot1))
       self$results$plot2$setVisible(
-        isTRUE(self$options$plot2) && supportGridAvailable && !combineMainPlots
+        isTRUE(self$options$plot2) && supportGridAvailable
       )
-      
       self$results$plot3$setVisible(
-        isTRUE(self$options$plot3) && supportGridAvailable && !combineMainPlots
+        isTRUE(self$options$plot3) && supportGridAvailable
       )
-      
       self$results$plot4$setVisible(
-        isTRUE(self$options$plot4) && supportGridAvailable && !combineMainPlots
+        isTRUE(self$options$plot4) && supportGridAvailable
       )
-      
       self$results$plot5$setVisible(
-        isTRUE(self$options$plot5) && supportGridAvailable && !combineMainPlots
+        isTRUE(self$options$plot5) && supportGridAvailable
       )
-      
       self$results$plot6$setVisible(
-        isTRUE(self$options$plot6) && reestimationPlotsAvailable && !combineMainPlots
+        isTRUE(self$options$plot6) && reestimationPlotsAvailable
       )
-      
       self$results$plot7$setVisible(
-        isTRUE(self$options$plot7) && reestimationPlotsAvailable && !combineMainPlots
+        isTRUE(self$options$plot7) && reestimationPlotsAvailable
       )
-      
+
       needsTrueCoef <- self$options$plot5 || self$options$plot7
       
       trueCoef <- NULL
@@ -153,18 +178,25 @@ TASWGCEClass <- R6::R6Class(
       
       terms <- c(covs, factors)
       
-      form <- stats::reformulate(
-        termlabels = terms,
-        response = dep,
-        intercept = self$options$intercept
+      formStr <- jmvcore::constructFormula(
+        dep = dep,
+        terms = c(covs, factors)
       )
+      
+      if (!isTRUE(self$options$intercept))
+        formStr <- paste(formStr, "- 1")
+      
+      form <- stats::as.formula(formStr)
       
       if (needsTrueCoef) {
         
         trueCoefText <- trimws(self$options$trueCoef)
         
         if (trueCoefText == "") {
-          jmvcore::reject("Plots 5 and 7 require a vector of true coefficients.", code = "true_coef_required")
+          jmvcore::reject(
+            "The precision-error plots require a vector of true coefficients.",
+            code = "true_coef_required"
+          )
         }
         
         trueCoef <- suppressWarnings(
@@ -198,12 +230,7 @@ TASWGCEClass <- R6::R6Class(
       weightValues <- unique(parseNumericVector(self$options$weight))
       
       self$results$plotCV$setVisible(
-        isTRUE(self$options$plotCV) && cvPlotAvailable && !combineMainPlots
-      )
-      
-      self$results$plotCV$setSize(
-        400,
-        160 + 140 * length(weightValues)
+        isTRUE(self$options$plotCV) && cvPlotAvailable
       )
       
       if (
@@ -248,9 +275,17 @@ TASWGCEClass <- R6::R6Class(
         
       }
       
-      self$results$text$setContent("<p>Starting fit...</p>")
+      fitCache <- self$results$fitCache$state
+      useCachedFit <- is.list(fitCache) &&
+        !is.null(fitCache$fit) && !is.null(fitCache$ci)
+
+      self$results$text$setContent(if (useCachedFit) {
+        "<p>Updating results from the fitted model...</p>"
+      } else {
+        "<p>Starting fit...</p>"
+      })
       private$.checkpoint()
-      
+
       start_time <- Sys.time()
       
       warningMsg <- NULL
@@ -272,9 +307,14 @@ TASWGCEClass <- R6::R6Class(
         }
       }
       
-      fit <- tryCatch(
-        withCallingHandlers(
-        GCEstim::cv.lmgce(
+      if (useCachedFit) {
+        fit <- fitCache$fit
+        warningMsg <- fitCache$warningMsg
+        fitElapsed <- fitCache$fitElapsed
+      } else {
+        fit <- tryCatch(
+          withCallingHandlers(
+          GCEstim::cv.lmgce(
           formula = form,
           data = data,
           support.method = "standardized",
@@ -290,30 +330,41 @@ TASWGCEClass <- R6::R6Class(
           weight = weightValues,
           twosteps.n = self$options$twostepsN,
           method = self$options$method,
-          caseGLM = self$options$caseGLM,
+          caseGLM = "D",
           boot.B = bootB,
           boot.method = bootMethod,
           OLS = self$options$OLS,
           seed = self$options$seed
         ),
         warning = function(w) {
-          warningMsg <<- conditionMessage(w)
+          message <- conditionMessage(w)
+          
+          warningMsg <<- if (is.null(warningMsg) || !nzchar(warningMsg)) {
+            message
+          } else {
+            paste(warningMsg, message, sep = "; ")
+          }
+          
           invokeRestart("muffleWarning")
         }
         ),
-        error = function(e) e
-      )
-      
-      if (inherits(fit, "error")) {
-        jmvcore::reject("Model estimation failed: {message}",
-          code = "fit_failed", message = conditionMessage(fit))
+          error = function(e) e
+        )
+
+        if (inherits(fit, "error")) {
+          jmvcore::reject("Model estimation failed: {message}",
+            code = "fit_failed", message = conditionMessage(fit))
+        }
       }
-      
+
       bestFit <- fit$best
-      
+
       if (is.null(bestFit)) {
         jmvcore::reject("Cross-validation did not return a selected model.", code = "no_selected_model")
       }
+
+      if (!useCachedFit)
+        fitElapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
       
       supportLimits <- as.matrix(bestFit$support.matrix)
       supportTable <- self$results$signalSupports
@@ -321,7 +372,7 @@ TASWGCEClass <- R6::R6Class(
         "Signal Supports (%d equally spaced points)",
         as.integer(fit$support.signal.points.best)
       ))
-      for (i in seq_len(nrow(supportLimits))) {
+      if ((length(supportTable$rowKeys) == 0L || !supportTable$isFilled())) for (i in seq_len(nrow(supportLimits))) {
         supportTable$addRow(rowKey = as.character(i), values = list(
           term = rownames(supportLimits)[i],
           lower = as.numeric(supportLimits[i, 1]),
@@ -345,19 +396,22 @@ TASWGCEClass <- R6::R6Class(
         )
       }
       
-      if (self$options$saveW && self$options$caseGLM == "D") {
+      if (self$options$saveW) {
         w <- as.matrix(bestFit$w)
         
         if (nrow(w) != nrow(data) || ncol(w) < 1L) {
-          jmvcore::reject("Noise probabilities do not match the complete cases.", code = "noise_probability_dimensions")
-        }
-        
-        if (self$results$saveW$isNotFilled()) {
+          message <- "Noise probabilities could not be saved because their dimensions do not match the complete cases."
+          warningMsg <- if (is.null(warningMsg) || !nzchar(warningMsg)) {
+            message
+          } else {
+            paste(warningMsg, message, sep = "; ")
+          }
+        } else if (self$results$saveW$isNotFilled()) {
           keys <- as.character(seq_len(ncol(w)))
           
           self$results$saveW$set(
             keys,
-            paste0("TARW-GCE w", keys),
+            paste0("TASW-GCE w", keys),
             paste0("Selected model noise probability at support point ", keys),
             rep("continuous", length(keys))
           )
@@ -373,9 +427,7 @@ TASWGCEClass <- R6::R6Class(
         }
       }
       
-      elapsed <- as.numeric(
-        difftime(Sys.time(), start_time, units = "secs")
-      )
+      elapsed <- fitElapsed
       
       time_txt <- if (elapsed < 60)
         paste0(round(elapsed, 3), " s")
@@ -390,33 +442,39 @@ TASWGCEClass <- R6::R6Class(
       
       ## Confidence Interval
       
-      ci <- NULL
-      
-      if (self$options$bootstrap) {
-        
-        ci <- tryCatch(
-          stats::confint(
-            bestFit,
-            level = self$options$bootConfLevel,
-            method = self$options$bootCIMethod
-          ),
-          error = function(e) e
-        )
-        
+      if (useCachedFit) {
+        ci <- fitCache$ci
       } else {
-        
-        ci <- tryCatch(
-          stats::confint(
-            bestFit,
-            level = self$options$bootConfLevel
-          ),
-          error = function(e) e
-        )
-      }
-      
-      if (inherits(ci, "error")) {
-        jmvcore::reject("Confidence intervals: {message}",
-          code = "ci_failed", message = conditionMessage(ci))
+        if (self$options$bootstrap) {
+          ci <- tryCatch(
+            stats::confint(
+              bestFit,
+              level = self$options$bootConfLevel,
+              method = self$options$bootCIMethod
+            ),
+            error = function(e) e
+          )
+        } else {
+          ci <- tryCatch(
+            stats::confint(
+              bestFit,
+              level = self$options$bootConfLevel
+            ),
+            error = function(e) e
+          )
+        }
+
+        if (inherits(ci, "error")) {
+          jmvcore::reject("Confidence intervals: {message}",
+            code = "ci_failed", message = conditionMessage(ci))
+        }
+
+        self$results$fitCache$setState(list(
+          fit = fit,
+          ci = ci,
+          warningMsg = warningMsg,
+          fitElapsed = fitElapsed
+        ))
       }
       
       self$results$text$setContent("<p>CI completed. Filling tables...</p>")
@@ -436,58 +494,58 @@ TASWGCEClass <- R6::R6Class(
       
       summaryTable <- self$results$modelSummary
       
-      summaryTable$addRow(rowKey = "formula", values = list(
+      summaryTable$setRow(rowKey = "formula", values = list(
         measure = "Formula",
         value = paste(deparse(form), collapse = " ")
       ))
       
-      summaryTable$addRow(rowKey = "n", values = list(
+      summaryTable$setRow(rowKey = "n", values = list(
         measure = "Complete cases",
         value = as.character(nrow(data))
       ))
       
-      summaryTable$addRow(rowKey = "cvNfolds", values = list(
+      summaryTable$setRow(rowKey = "cvNfolds", values = list(
         measure = "Cross-validation folds",
         value = as.character(self$options$cvNfolds)
       ))
       
-      summaryTable$addRow(rowKey = "errorMeasure", values = list(
+      summaryTable$setRow(rowKey = "errorMeasure", values = list(
         measure = "Prediction-error measure",
         value = self$options$errorMeasure
       ))
       
-      summaryTable$addRow(rowKey = "errorMeasureWhich", values = list(
+      summaryTable$setRow(rowKey = "errorMeasureWhich", values = list(
         measure = "Selection rule",
-        value = self$options$errorMeasureWhich
+        value = c(
+          "1se" = "Within one standard error",
+          "min" = "Minimum error"
+        )[[self$options$errorMeasureWhich]]
       ))
       
-      summaryTable$addRow(rowKey = "seed", values = list(
+      summaryTable$setRow(rowKey = "seed", values = list(
         measure = "Seed",
         value = as.character(self$options$seed)
       ))
       
-      summaryTable$addRow(rowKey = "method", values = list(
+      methodLabel <- sub("^dual\\.", "Dual: ", self$options$method)
+      methodLabel <- sub("^primal\\.", "Primal: ", methodLabel)
+      
+      summaryTable$setRow(rowKey = "method", values = list(
         measure = "Method",
-        value = self$options$method
+        value = methodLabel
       ))
       
-      summaryTable$addRow(rowKey = "supportMethod", values = list(
+      summaryTable$setRow(rowKey = "supportMethod", values = list(
         measure = "Support method",
         value = "Standardized coefficients"
       ))
       
-      summaryTable$addRow(rowKey = "signalSupportSpecification", values = list(
+      summaryTable$setRow(rowKey = "signalSupportSpecification", values = list(
         measure = "Signal support specification",
         value = "Symmetric"
       ))
       
       noiseResponse <- as.numeric(data[[dep]])
-      if (self$options$caseGLM %in% c("M", "NM")) {
-        noiseX <- stats::model.matrix(form, data)
-        noiseResponse <- as.numeric(crossprod(noiseX, noiseResponse))
-        if (self$options$caseGLM == "NM")
-          noiseResponse <- noiseResponse / nrow(noiseX)
-      }
       
       noiseLimit <- 3 * stats::sd(noiseResponse)
       
@@ -497,60 +555,49 @@ TASWGCEClass <- R6::R6Class(
         format(signif(noiseLimit, 6), trim = TRUE), "]"
       )
       
-      summaryTable$addRow(rowKey = "noiseSupportMethod", values = list(
+      summaryTable$setRow(rowKey = "noiseSupportMethod", values = list(
         measure = "Noise support specification",
         value = paste0("3 sigma: ", noiseInterval)
       ))
       
-      summaryTable$addRow(rowKey = "supportSignalVectorN", values = list(
+      summaryTable$setRow(rowKey = "supportSignalVectorN", values = list(
         measure = "Number of support spaces",
         value = as.character(self$options$supportSignalVectorN)
       ))
       
-      summaryTable$addRow(rowKey = "M", values = list(
+      summaryTable$setRow(rowKey = "M", values = list(
         measure = "Candidate signal support points",
         value = paste(Mvalues, collapse = ", ")
       ))
       
-      summaryTable$addRow(rowKey = "J", values = list(
+      summaryTable$setRow(rowKey = "J", values = list(
         measure = "Candidate noise support points",
         value = paste(Jvalues, collapse = ", ")
       ))
       
-      summaryTable$addRow(rowKey = "weight", values = list(
+      summaryTable$setRow(rowKey = "weight", values = list(
         measure = "Candidate noise weight values",
         value = paste(weightValues, collapse = ", ")
       ))
       
-      summaryTable$addRow(rowKey = "caseGLM", values = list(
-        measure = "GLM case",
-        value = self$options$caseGLM
-      ))
-      
-      summaryTable$addRow(rowKey = "twostepsN", values = list(
+      summaryTable$setRow(rowKey = "twostepsN", values = list(
         measure = "Post-GCE re-estimations",
         value = as.character(self$options$twostepsN)
       ))
       
-      summaryTable$addRow(rowKey = "ciType", values = list(
+      summaryTable$setRow(rowKey = "ciType", values = list(
         measure = "Confidence interval type",
         value = if (self$options$bootstrap) {
-          "Bootstrap"
+          c(
+            percentile = "Bootstrap percentile",
+            basic = "Bootstrap basic"
+          )[[self$options$bootCIMethod]]
         } else {
-          "Asymptotic normal"
+          "Asymptotic (z)"
         }
       ))
       
-      summaryTable$addRow(rowKey = "ciMethod", values = list(
-        measure = "Confidence interval method",
-        value = if (self$options$bootstrap) {
-          self$options$bootCIMethod
-        } else {
-          "z"
-        }
-      ))
-      
-      summaryTable$addRow(rowKey = "ciLevel", values = list(
+      summaryTable$setRow(rowKey = "ciLevel", values = list(
         measure = "Confidence level",
         value = paste0(
           100 * self$options$bootConfLevel,
@@ -560,14 +607,18 @@ TASWGCEClass <- R6::R6Class(
       
       if (self$options$bootstrap) {
         
-        summaryTable$addRow(rowKey = "bootB", values = list(
+        summaryTable$setRow(rowKey = "bootB", values = list(
           measure = "Bootstrap samples",
           value = as.character(self$options$bootB)
         ))
         
-        summaryTable$addRow(rowKey = "bootMethod", values = list(
+        summaryTable$setRow(rowKey = "bootMethod", values = list(
           measure = "Bootstrap resampling method",
-          value = self$options$bootMethod
+          value = c(
+            residuals = "Residual",
+            cases = "Case",
+            wild = "Wild"
+          )[[self$options$bootMethod]]
         ))
       }
       
@@ -591,9 +642,12 @@ TASWGCEClass <- R6::R6Class(
       if (nCVRows > 0) {
         
         for (i in seq_len(nCVRows)) {
+
+          if (cvTable$isFilled(col = "cvMean", rowKey = as.character(i)))
+            next
           
-          cvTable$addRow(
-            rowKey = paste0("cv_", i),
+          cvTable$setRow(
+            rowKey = as.character(i),
             values = list(
               signalPoints = cvResults$support.signal.points[i],
               noisePoints = cvResults$support.noise.points[i],
@@ -612,9 +666,7 @@ TASWGCEClass <- R6::R6Class(
       coefs <- summ$coefficients
       coefTable <- self$results$coefficients
       
-      hasCI <- self$options$bootstrap && !is.null(ci)
-      
-      for (i in seq_len(nrow(coefs))) {
+      if ((length(coefTable$rowKeys) == 0L || !coefTable$isFilled())) for (i in seq_len(nrow(coefs))) {
         
         term <- rownames(coefs)[i]
         
@@ -636,12 +688,14 @@ TASWGCEClass <- R6::R6Class(
       
       if (!is.null(bestFit$p) &&
           nrow(pMatrix) == nrow(coefs) &&
-          ncol(pMatrix) > 0L) {
+          ncol(pMatrix) > 0L &&
+          (length(self$results$signalProbabilities$rowKeys) == 0L ||
+           !self$results$signalProbabilities$isFilled())) {
         
         pTable <- self$results$signalProbabilities
         pKeys <- paste0("p", seq_len(ncol(pMatrix)))
         
-        for (j in seq_len(ncol(pMatrix))) {
+        if (length(pTable$rowKeys) == 0L) for (j in seq_len(ncol(pMatrix))) {
           pTable$addColumn(
             name = pKeys[j],
             title = paste0("p_", j),
@@ -671,136 +725,213 @@ TASWGCEClass <- R6::R6Class(
       self$results$text$setContent("<p>Tables completed. Plotting...</p>")
       private$.checkpoint()
       
+      plotWarnings <- character()
+      
+      tryPlot <- function(label, expr) {
+        tryCatch(
+          expr,
+          error = function(e) {
+            plotWarnings <<- c(
+              plotWarnings,
+              paste0(label, ": ", conditionMessage(e))
+            )
+            NULL
+          }
+        )
+      }
+      
+      plotToPNG <- function(p, height = 900) {
+        path <- tempfile(fileext = ".png")
+        on.exit(unlink(path), add = TRUE)
+        grDevices::png(path, width = 1200, height = height, res = 150)
+        tryCatch(print(p), finally = grDevices::dev.off())
+        readBin(path, what = "raw", n = file.info(path)$size)
+      }
+
+      # Image state already contains a compact PNG unless its own inputs changed.
+      needsPlot <- function(result) {
+        state <- result$state
+        is.null(state) || is.null(state$png)
+      }
+
       plots <- list()
 
-      if (self$options$plot1)
-        plots$plot1 <- tryCatch(plot(bestFit,
-                                     which = 1,
-                                     ci.level = self$options$bootConfLevel,
-                                     ci.method = ifelse(self$options$bootstrap,
-                                                        self$options$bootCIMethod,
-                                                        "z"),
-                                     OLS = self$options$OLS),
-                                error = function(e) NULL)
-
-      if (self$options$plot2 && supportGridAvailable)
-        plots$plot2 <- tryCatch(plot(bestFit,
-                                     which = 2,
-                                     OLS = self$options$OLS,
-                                     NormEnt = self$options$NormEnt),
-                                error = function(e) NULL)
-
-      if (self$options$plot3 && supportGridAvailable)
-        plots$plot3 <- tryCatch(plot(bestFit,
-                                     which = 3,
-                                     OLS = self$options$OLS),
-                                error = function(e) NULL)
-
-      if (self$options$plot4 && supportGridAvailable)
-        plots$plot4 <- tryCatch(plot(bestFit,
-                                     which = 4,
-                                     OLS = self$options$OLS),
-                                error = function(e) NULL)
-
-      if (self$options$plot5 && supportGridAvailable)
-        plots$plot5 <- tryCatch(plot(bestFit,
-                                     which = 5,
-                                     coef = trueCoef,
-                                     OLS = self$options$OLS,
-                                     NormEnt = self$options$NormEnt),
-                                error = function(e) NULL)
-
-      if (self$options$plot6 && reestimationPlotsAvailable)
-        plots$plot6 <- tryCatch(plot(bestFit,
-                                     which = 6,
-                                     OLS = self$options$OLS),
-                                error = function(e) NULL)
-
-      if (self$options$plot7 && reestimationPlotsAvailable)
-        plots$plot7 <- tryCatch(plot(bestFit,
-                                     which = 7,
-                                     coef = trueCoef,
-                                     OLS = self$options$OLS),
-                                error = function(e) NULL)
+      if (self$options$plot1 && needsPlot(self$results$plot1))
+        plots$plot1 <- tryPlot(
+          "Estimates and confidence intervals",
+          plot(
+            bestFit,
+            which = 1,
+            ci.level = self$options$bootConfLevel,
+            ci.method = ifelse(
+              self$options$bootstrap,
+              self$options$bootCIMethod,
+              "z"
+            ),
+            OLS = self$options$OLS
+          )
+        )
       
-      if (isTRUE(self$options$plotCV) && cvPlotAvailable) {
-        plots$plotCV <- tryCatch(
+      if (self$options$plot2 && supportGridAvailable && needsPlot(self$results$plot2))
+        plots$plot2 <- tryPlot(
+          "Supports vs prediction error",
+          plot(
+            bestFit,
+            which = 2,
+            OLS = self$options$OLS,
+            NormEnt = self$options$NormEnt
+          )
+        )
+      
+      if (self$options$plot3 && supportGridAvailable && needsPlot(self$results$plot3))
+        plots$plot3 <- tryPlot(
+          "Supports vs estimates",
+          plot(
+            bestFit,
+            which = 3,
+            OLS = self$options$OLS
+          )
+        )
+      
+      if (self$options$plot4 && supportGridAvailable && needsPlot(self$results$plot4))
+        plots$plot4 <- tryPlot(
+          "Supports vs normalized entropy",
+          plot(
+            bestFit,
+            which = 4,
+            OLS = self$options$OLS
+          )
+        )
+      
+      if (self$options$plot5 && supportGridAvailable && needsPlot(self$results$plot5))
+        plots$plot5 <- tryPlot(
+          "Supports vs precision error",
+          plot(
+            bestFit,
+            which = 5,
+            coef = trueCoef,
+            OLS = self$options$OLS,
+            NormEnt = self$options$NormEnt
+          )
+        )
+      
+      if (self$options$plot6 && reestimationPlotsAvailable && needsPlot(self$results$plot6))
+        plots$plot6 <- tryPlot(
+          "GCE re-estimation vs prediction error",
+          plot(
+            bestFit,
+            which = 6,
+            OLS = self$options$OLS
+          )
+        )
+      
+      if (self$options$plot7 && reestimationPlotsAvailable && needsPlot(self$results$plot7))
+        plots$plot7 <- tryPlot(
+          "GCE re-estimation vs precision error",
+          plot(
+            bestFit,
+            which = 7,
+            coef = trueCoef,
+            OLS = self$options$OLS
+          )
+        )
+      
+      if (isTRUE(self$options$plotCV) && cvPlotAvailable && needsPlot(self$results$plotCV))
+        plots$plotCV <- tryPlot(
+          "Cross-validation error by support combination",
           plot(
             fit,
             which = 1,
             ncol = 1,
             scales = "free"
-          ),
-          error = function(e) NULL
-        )
-      }
-
-      if (combineMainPlots) {
-        plotNames <- c(
-          if (isTRUE(self$options$plotCV) && cvPlotAvailable) "plotCV",
-          paste0("plot", which(selectedMainPlots))
-        )
-        plotItems <- lapply(plots[plotNames], function(x) {
-          if (inherits(x, "ggplot"))
-            return(x)
-          if (is.null(x) || length(x) == 0L ||
-              !inherits(x[[1L]], "ggplot"))
-            return(NULL)
-          x[[1L]]
-        })
-        plotItems <- Filter(Negate(is.null), plotItems)
-
-        if (length(plotItems) > 0L) {
-          plotHeights <- ifelse(
-            names(plotItems) == "plotCV",
-            160 + 140 * length(weightValues),
-            320
           )
-          self$results$plotCombined$setSize(600, sum(plotHeights))
-          self$results$plotCombined$setState(list(
-            p = ggpubr::ggarrange(
-              plotlist = unname(plotItems), ncol = 1,
-              heights = unname(plotHeights)
-            )
-          ))
-        } else {
-          self$results$plotCombined$setState(list(p = NULL))
-        }
+        )
+
+      firstPlot <- function(x) {
+        if (inherits(x, "ggplot"))
+          return(x)
+        if (is.null(x) || length(x) == 0L)
+          return(NULL)
+        if (inherits(x[[1L]], "ggplot"))
+          return(x[[1L]])
+        NULL
       }
-      
-      if (self$options$plot1 && !combineMainPlots)
-        self$results$plot1$setState(list(p = plots$plot1))
 
-      if (self$options$plot2 && supportGridAvailable && !combineMainPlots)
-        self$results$plot2$setState(list(p = plots$plot2))
-      
-      if (self$options$plot3 && supportGridAvailable && !combineMainPlots)
-        self$results$plot3$setState(list(p = plots$plot3))
-      
-      if (self$options$plot4 && supportGridAvailable && !combineMainPlots)
-        self$results$plot4$setState(list(p = plots$plot4))
-      
-      if (self$options$plot5 && supportGridAvailable && !combineMainPlots)
-        self$results$plot5$setState(list(p = plots$plot5))
+      setPlotPNG <- function(result, x, label, height = 900) {
+        p <- firstPlot(x)
+        pngBytes <- if (is.null(p)) {
+          NULL
+        } else {
+          tryPlot(label, plotToPNG(p, height = height))
+        }
+        result$setState(list(png = pngBytes))
+      }
 
-      if (self$options$plot6 && reestimationPlotsAvailable && !combineMainPlots)
-        self$results$plot6$setState(list(p = plots$plot6))
+      if (self$options$plot1 && needsPlot(self$results$plot1))
+        setPlotPNG(
+          self$results$plot1, plots$plot1,
+          "Estimates and confidence intervals"
+        )
 
-      if (self$options$plot7 && reestimationPlotsAvailable && !combineMainPlots)
-        self$results$plot7$setState(list(p = plots$plot7))
-      
-      if (isTRUE(self$options$plotCV) && cvPlotAvailable && !combineMainPlots)
-        self$results$plotCV$setState(list(p = plots$plotCV))
-      
+      if (self$options$plot2 && supportGridAvailable && needsPlot(self$results$plot2))
+        setPlotPNG(
+          self$results$plot2, plots$plot2,
+          "Supports vs prediction error"
+        )
+
+      if (self$options$plot3 && supportGridAvailable && needsPlot(self$results$plot3))
+        setPlotPNG(
+          self$results$plot3, plots$plot3,
+          "Supports vs estimates"
+        )
+
+      if (self$options$plot4 && supportGridAvailable && needsPlot(self$results$plot4))
+        setPlotPNG(
+          self$results$plot4, plots$plot4,
+          "Supports vs normalized entropy"
+        )
+
+      if (self$options$plot5 && supportGridAvailable && needsPlot(self$results$plot5))
+        setPlotPNG(
+          self$results$plot5, plots$plot5,
+          "Supports vs precision error"
+        )
+
+      if (self$options$plot6 && reestimationPlotsAvailable && needsPlot(self$results$plot6))
+        setPlotPNG(
+          self$results$plot6, plots$plot6,
+          "GCE re-estimation vs prediction error"
+        )
+
+      if (self$options$plot7 && reestimationPlotsAvailable && needsPlot(self$results$plot7))
+        setPlotPNG(
+          self$results$plot7, plots$plot7,
+          "GCE re-estimation vs precision error"
+        )
+
+      if (isTRUE(self$options$plotCV) && cvPlotAvailable && needsPlot(self$results$plotCV))
+        setPlotPNG(
+          self$results$plotCV, plots$plotCV,
+          "Cross-validation error by support combination",
+          height = round(3 * (160 + 140 * length(weightValues)))
+        )
+
       ## Complete
       
-      if (!is.null(warningMsg) && nzchar(warningMsg)) {
+      warningMessages <- plotWarnings
+      
+      if (!is.null(warningMsg) && nzchar(warningMsg))
+        warningMessages <- c(warningMsg, warningMessages)
+      
+      if (length(warningMessages)) {
         warningNotice <- jmvcore::Notice$new(
           options = self$options,
           name = ".fitWarning",
           type = jmvcore::NoticeType$WARNING
         )
-        warningNotice$setContent(warningMsg)
+        warningNotice$setContent(
+          paste(unique(warningMessages), collapse = "; ")
+        )
         self$results$insert(1, warningNotice)
       }
       
@@ -809,35 +940,39 @@ TASWGCEClass <- R6::R6Class(
         name = ".fitTime",
         type = jmvcore::NoticeType$INFO
       )
-      timeNotice$setContent(paste0("Computation time: ", time_txt))
+      timeNotice$setContent(if (useCachedFit) {
+        paste0("Previous fit reused (original fit time: ", time_txt, ").")
+      } else {
+        paste0("Computation time: ", time_txt)
+      })
       self$results$insert(1, timeNotice)
       
       self$results$text$setVisible(FALSE)
       
     },
     
-    .plot1 = function(image, ggtheme, theme) private$.printPlot(image),
-    .plot2 = function(image, ggtheme, theme) private$.printPlot(image),
-    .plot3 = function(image, ggtheme, theme) private$.printPlot(image),
-    .plot4 = function(image, ggtheme, theme) private$.printPlot(image),
-    .plot5 = function(image, ggtheme, theme) private$.printPlot(image),
-    .plot6 = function(image, ggtheme, theme) private$.printPlot(image),
-    .plot7 = function(image, ggtheme, theme) private$.printPlot(image),
-    .plotCombined = function(image, ggtheme, theme) private$.printPlot(image),
-    .plotCV = function(image, ggtheme, theme) private$.printPlot(image),
+    .plot1 = function(image, ggtheme, theme) private$.printPNG(image),
+    .plot2 = function(image, ggtheme, theme) private$.printPNG(image),
+    .plot3 = function(image, ggtheme, theme) private$.printPNG(image),
+    .plot4 = function(image, ggtheme, theme) private$.printPNG(image),
+    .plot5 = function(image, ggtheme, theme) private$.printPNG(image),
+    .plot6 = function(image, ggtheme, theme) private$.printPNG(image),
+    .plot7 = function(image, ggtheme, theme) private$.printPNG(image),
+    .plotCV = function(image, ggtheme, theme) private$.printPNG(image),
 
-    .printPlot = function(image) {
+    .printPNG = function(image) {
+      if (is.null(image$state) || is.null(image$state$png))
+        return(FALSE)
 
-      p <- image$state$p
-
-      if (is.null(p)) {
-        graphics::plot.new()
-        graphics::text(0.5, 0.5, "Plot could not be generated.")
-        return()
-      }
-
-      print(p)
+      grid::grid.newpage()
+      grid::grid.raster(
+        png::readPNG(image$state$png, native = TRUE),
+        width = grid::unit(1, "npc"),
+        height = grid::unit(1, "npc"),
+        interpolate = TRUE
+      )
+      TRUE
     }
-    
+
   )
 )

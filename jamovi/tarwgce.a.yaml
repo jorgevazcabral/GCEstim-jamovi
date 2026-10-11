@@ -33,18 +33,6 @@ options:
     type: Bool
     default: true
   
-  - name: caseGLM
-    title: General linear model case
-    type: List
-    options:
-      - title: Data
-        name: D
-      - title: Moment
-        name: M
-      - title: Normed moment
-        name: NM
-    default: D
-
   - name: ridgeSignalSupport
     title: Signal support specification
     type: List
@@ -76,17 +64,17 @@ options:
   - name: M
     title: Signal support points
     type: String
-    default: '3, 5, 7, 9'
+    default: '3, 5, 7'
 
   - name: J
     title: Noise support points
     type: String
-    default: '3, 5, 7, 9'
+    default: '3, 5, 7'
 
   - name: weight
     title: Noise weight values
     type: String
-    default: '0.1, 0.3, 0.5, 0.7, 0.9'
+    default: '0.3, 0.5, 0.7'
     
   - name: cvNfolds
     title: Number of CV folds
@@ -246,7 +234,7 @@ options:
         title: 'Primal: solnl'
       - name: primal.solnp
         title: 'Primal: solnp'
-    default: dual.BFGS
+    default: dual.lbfgsb3c
   
   - name: plot1
     title: Estimates and confidence intervals

@@ -137,8 +137,6 @@ children:
       - type: TextBox
         name: twostepsN
         format: number
-      - type: ComboBox
-        name: caseGLM
       - type: TextBox
         name: seed
         label: Seed

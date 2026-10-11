@@ -1,7 +1,7 @@
 Package: GCEstimjmv
 Type: Package
 Title: Entropy-Based Linear Regression for jamovi
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: person(
     given = "Jorge",
     family = "Cabral",
@@ -25,7 +25,11 @@ Imports:
     R6,
     GCEstim (>= 1.1.0),
     stats,
-    graphics
+    graphics,
+    ggpubr,
+    png,
+    grid,
+    grDevices
 Remotes: jorgevazcabral/GCEstim@v1.1.0
 URL: https://github.com/jorgevazcabral/GCEstim-jamovi
 BugReports: https://github.com/jorgevazcabral/GCEstim-jamovi/issues

@@ -106,8 +106,6 @@ children:
     children:
       - type: ComboBox
         name: method
-      - type: ComboBox
-        name: caseGLM
   - type: CollapseBox
     label: Confidence Intervals
     collapsed: true

@@ -11,10 +11,9 @@ TASWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             covs = NULL,
             factors = NULL,
             intercept = TRUE,
-            caseGLM = "D",
-            M = "3, 5, 7, 9",
-            J = "3, 5, 7, 9",
-            weight = "0.1, 0.3, 0.5, 0.7, 0.9",
+            M = "3, 5, 7",
+            J = "3, 5, 7",
+            weight = "0.3, 0.5, 0.7",
             cvNfolds = 5,
             cvTableRows = 10,
             errorMeasure = "RMSE",
@@ -32,7 +31,7 @@ TASWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             bootMethod = "residuals",
             bootCIMethod = "percentile",
             bootConfLevel = 0.95,
-            method = "dual.BFGS",
+            method = "dual.lbfgsb3c",
             plot1 = FALSE,
             plot2 = TRUE,
             plot3 = FALSE,
@@ -66,26 +65,18 @@ TASWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "intercept",
                 intercept,
                 default=TRUE)
-            private$..caseGLM <- jmvcore::OptionList$new(
-                "caseGLM",
-                caseGLM,
-                options=list(
-                    "D",
-                    "M",
-                    "NM"),
-                default="D")
             private$..M <- jmvcore::OptionString$new(
                 "M",
                 M,
-                default="3, 5, 7, 9")
+                default="3, 5, 7")
             private$..J <- jmvcore::OptionString$new(
                 "J",
                 J,
-                default="3, 5, 7, 9")
+                default="3, 5, 7")
             private$..weight <- jmvcore::OptionString$new(
                 "weight",
                 weight,
-                default="0.1, 0.3, 0.5, 0.7, 0.9")
+                default="0.3, 0.5, 0.7")
             private$..cvNfolds <- jmvcore::OptionInteger$new(
                 "cvNfolds",
                 cvNfolds,
@@ -198,7 +189,7 @@ TASWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "dual.nlm",
                     "primal.solnl",
                     "primal.solnp"),
-                default="dual.BFGS")
+                default="dual.lbfgsb3c")
             private$..plot1 <- jmvcore::OptionBool$new(
                 "plot1",
                 plot1,
@@ -247,7 +238,6 @@ TASWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..covs)
             self$.addOption(private$..factors)
             self$.addOption(private$..intercept)
-            self$.addOption(private$..caseGLM)
             self$.addOption(private$..M)
             self$.addOption(private$..J)
             self$.addOption(private$..weight)
@@ -288,7 +278,6 @@ TASWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         covs = function() private$..covs$value,
         factors = function() private$..factors$value,
         intercept = function() private$..intercept$value,
-        caseGLM = function() private$..caseGLM$value,
         M = function() private$..M$value,
         J = function() private$..J$value,
         weight = function() private$..weight$value,
@@ -328,7 +317,6 @@ TASWGCEOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..covs = NA,
         ..factors = NA,
         ..intercept = NA,
-        ..caseGLM = NA,
         ..M = NA,
         ..J = NA,
         ..weight = NA,
@@ -368,6 +356,7 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "TASWGCEResults",
     inherit = jmvcore::Group,
     active = list(
+        fitCache = function() private$.items[["fitCache"]],
         text = function() private$.items[["text"]],
         modelSummary = function() private$.items[["modelSummary"]],
         signalSupports = function() private$.items[["signalSupports"]],
@@ -382,7 +371,6 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         plot5 = function() private$.items[["plot5"]],
         plot6 = function() private$.items[["plot6"]],
         plot7 = function() private$.items[["plot7"]],
-        plotCombined = function() private$.items[["plotCombined"]],
         saveFitted = function() private$.items[["saveFitted"]],
         saveResiduals = function() private$.items[["saveResiduals"]],
         saveW = function() private$.items[["saveW"]]),
@@ -395,6 +383,42 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 title="TASW-GCE Linear Model",
                 refs=list(
                     "GCEstim"))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="fitCache",
+                title="Fitted model cache",
+                visible=FALSE,
+                columns=list(
+                    list(
+                        `name`="value", 
+                        `title`="Value", 
+                        `type`="text")),
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "M",
+                    "J",
+                    "weight",
+                    "supportSignal",
+                    "supportSignalVectorN",
+                    "supportSignalVectorMin",
+                    "supportSignalVectorMax",
+                    "cvNfolds",
+                    "errorMeasure",
+                    "errorMeasureWhich",
+                    "method",
+                    "twostepsN",
+                    "OLS",
+                    "seed",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "bootConfLevel")))
             self$add(jmvcore::Html$new(
                 options=options,
                 name="text",
@@ -402,6 +426,32 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Table$new(
                 options=options,
                 name="modelSummary",
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "M",
+                    "J",
+                    "weight",
+                    "supportSignal",
+                    "supportSignalVectorN",
+                    "supportSignalVectorMin",
+                    "supportSignalVectorMax",
+                    "cvNfolds",
+                    "errorMeasure",
+                    "errorMeasureWhich",
+                    "method",
+                    "twostepsN",
+                    "OLS",
+                    "seed",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "bootConfLevel"),
                 title="Model Summary",
                 columns=list(
                     list(
@@ -415,6 +465,32 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Table$new(
                 options=options,
                 name="signalSupports",
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "M",
+                    "J",
+                    "weight",
+                    "supportSignal",
+                    "supportSignalVectorN",
+                    "supportSignalVectorMin",
+                    "supportSignalVectorMax",
+                    "cvNfolds",
+                    "errorMeasure",
+                    "errorMeasureWhich",
+                    "method",
+                    "twostepsN",
+                    "OLS",
+                    "seed",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "bootConfLevel"),
                 title="Signal Supports",
                 columns=list(
                     list(
@@ -432,12 +508,67 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plotCV",
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "M",
+                    "J",
+                    "weight",
+                    "supportSignal",
+                    "supportSignalVectorN",
+                    "supportSignalVectorMin",
+                    "supportSignalVectorMax",
+                    "cvNfolds",
+                    "errorMeasure",
+                    "errorMeasureWhich",
+                    "method",
+                    "twostepsN",
+                    "OLS",
+                    "seed",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "bootConfLevel",
+                    "plotCV"),
                 title="Cross-validation error by support combination",
                 renderFun=".plotCV",
                 visible="(plotCV)"))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="cvResults",
+                rows="(min(cvTableRows, length(unique(as.numeric(strsplit(M, \",\")[[1]]))) * length(unique(as.numeric(strsplit(J, \",\")[[1]]))) * length(unique(as.numeric(strsplit(weight, \",\")[[1]])))))",
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "M",
+                    "J",
+                    "weight",
+                    "supportSignal",
+                    "supportSignalVectorN",
+                    "supportSignalVectorMin",
+                    "supportSignalVectorMax",
+                    "cvNfolds",
+                    "errorMeasure",
+                    "errorMeasureWhich",
+                    "method",
+                    "twostepsN",
+                    "OLS",
+                    "seed",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "bootConfLevel",
+                    "cvTableRows"),
                 title="Cross-validation results",
                 columns=list(
                     list(
@@ -471,6 +602,32 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Table$new(
                 options=options,
                 name="coefficients",
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "M",
+                    "J",
+                    "weight",
+                    "supportSignal",
+                    "supportSignalVectorN",
+                    "supportSignalVectorMin",
+                    "supportSignalVectorMax",
+                    "cvNfolds",
+                    "errorMeasure",
+                    "errorMeasureWhich",
+                    "method",
+                    "twostepsN",
+                    "OLS",
+                    "seed",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "bootConfLevel"),
                 title="Coefficients",
                 columns=list(
                     list(
@@ -508,6 +665,32 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Table$new(
                 options=options,
                 name="signalProbabilities",
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "M",
+                    "J",
+                    "weight",
+                    "supportSignal",
+                    "supportSignalVectorN",
+                    "supportSignalVectorMin",
+                    "supportSignalVectorMax",
+                    "cvNfolds",
+                    "errorMeasure",
+                    "errorMeasureWhich",
+                    "method",
+                    "twostepsN",
+                    "OLS",
+                    "seed",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "bootConfLevel"),
                 title="Estimated signal support probabilities (p)",
                 columns=list(
                     list(
@@ -517,51 +700,238 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot1",
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "M",
+                    "J",
+                    "weight",
+                    "supportSignal",
+                    "supportSignalVectorN",
+                    "supportSignalVectorMin",
+                    "supportSignalVectorMax",
+                    "cvNfolds",
+                    "errorMeasure",
+                    "errorMeasureWhich",
+                    "method",
+                    "twostepsN",
+                    "OLS",
+                    "seed",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "bootConfLevel",
+                    "plot1"),
                 title="Estimates and confidence intervals",
                 renderFun=".plot1",
                 visible="(plot1)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot2",
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "M",
+                    "J",
+                    "weight",
+                    "supportSignal",
+                    "supportSignalVectorN",
+                    "supportSignalVectorMin",
+                    "supportSignalVectorMax",
+                    "cvNfolds",
+                    "errorMeasure",
+                    "errorMeasureWhich",
+                    "method",
+                    "twostepsN",
+                    "OLS",
+                    "seed",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "bootConfLevel",
+                    "plot2",
+                    "NormEnt"),
                 title="Supports vs prediction error",
                 renderFun=".plot2",
                 visible="(plot2 && supportSignalVectorN > 1)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot3",
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "M",
+                    "J",
+                    "weight",
+                    "supportSignal",
+                    "supportSignalVectorN",
+                    "supportSignalVectorMin",
+                    "supportSignalVectorMax",
+                    "cvNfolds",
+                    "errorMeasure",
+                    "errorMeasureWhich",
+                    "method",
+                    "twostepsN",
+                    "OLS",
+                    "seed",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "bootConfLevel",
+                    "plot3"),
                 title="Supports vs estimates",
                 renderFun=".plot3",
                 visible="(plot3 && supportSignalVectorN > 1)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot4",
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "M",
+                    "J",
+                    "weight",
+                    "supportSignal",
+                    "supportSignalVectorN",
+                    "supportSignalVectorMin",
+                    "supportSignalVectorMax",
+                    "cvNfolds",
+                    "errorMeasure",
+                    "errorMeasureWhich",
+                    "method",
+                    "twostepsN",
+                    "OLS",
+                    "seed",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "bootConfLevel",
+                    "plot4"),
                 title="Supports vs normalized entropy",
                 renderFun=".plot4",
                 visible="(plot4 && supportSignalVectorN > 1)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot5",
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "M",
+                    "J",
+                    "weight",
+                    "supportSignal",
+                    "supportSignalVectorN",
+                    "supportSignalVectorMin",
+                    "supportSignalVectorMax",
+                    "cvNfolds",
+                    "errorMeasure",
+                    "errorMeasureWhich",
+                    "method",
+                    "twostepsN",
+                    "OLS",
+                    "seed",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "bootConfLevel",
+                    "plot5",
+                    "NormEnt",
+                    "trueCoef"),
                 title="Supports vs precision error",
                 renderFun=".plot5",
                 visible="(plot5 && supportSignalVectorN > 1)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot6",
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "M",
+                    "J",
+                    "weight",
+                    "supportSignal",
+                    "supportSignalVectorN",
+                    "supportSignalVectorMin",
+                    "supportSignalVectorMax",
+                    "cvNfolds",
+                    "errorMeasure",
+                    "errorMeasureWhich",
+                    "method",
+                    "twostepsN",
+                    "OLS",
+                    "seed",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "bootConfLevel",
+                    "plot6"),
                 title="GCE reestimation vs prediction error",
                 renderFun=".plot6",
                 visible="(plot6 && twostepsN > 0)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot7",
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "M",
+                    "J",
+                    "weight",
+                    "supportSignal",
+                    "supportSignalVectorN",
+                    "supportSignalVectorMin",
+                    "supportSignalVectorMax",
+                    "cvNfolds",
+                    "errorMeasure",
+                    "errorMeasureWhich",
+                    "method",
+                    "twostepsN",
+                    "OLS",
+                    "seed",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "bootConfLevel",
+                    "plot7",
+                    "trueCoef"),
                 title="GCE reestimation vs precision error",
                 renderFun=".plot7",
                 visible="(plot7 && twostepsN > 0)"))
-            self$add(jmvcore::Image$new(
-                options=options,
-                name="plotCombined",
-                title="Selected model plots",
-                renderFun=".plotCombined",
-                visible=FALSE))
             self$add(jmvcore::Output$new(
                 options=options,
                 name="saveFitted",
@@ -615,7 +985,6 @@ TASWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param covs .
 #' @param factors .
 #' @param intercept .
-#' @param caseGLM .
 #' @param M .
 #' @param J .
 #' @param weight .
@@ -648,6 +1017,7 @@ TASWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param trueCoef .
 #' @return A results object containing:
 #' \tabular{llllll}{
+#'   \code{results$fitCache} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$modelSummary} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$signalSupports} \tab \tab \tab \tab \tab a table \cr
@@ -662,7 +1032,6 @@ TASWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$plot5} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plot6} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plot7} \tab \tab \tab \tab \tab an image \cr
-#'   \code{results$plotCombined} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$saveFitted} \tab \tab \tab \tab \tab an output \cr
 #'   \code{results$saveResiduals} \tab \tab \tab \tab \tab an output \cr
 #'   \code{results$saveW} \tab \tab \tab \tab \tab an output \cr
@@ -670,9 +1039,9 @@ TASWGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
 #'
-#' \code{results$modelSummary$asDF}
+#' \code{results$fitCache$asDF}
 #'
-#' \code{as.data.frame(results$modelSummary)}
+#' \code{as.data.frame(results$fitCache)}
 #'
 #' @export
 TASWGCE <- function(
@@ -682,10 +1051,9 @@ TASWGCE <- function(
     covs,
     factors,
     intercept = TRUE,
-    caseGLM = "D",
-    M = "3, 5, 7, 9",
-    J = "3, 5, 7, 9",
-    weight = "0.1, 0.3, 0.5, 0.7, 0.9",
+    M = "3, 5, 7",
+    J = "3, 5, 7",
+    weight = "0.3, 0.5, 0.7",
     cvNfolds = 5,
     cvTableRows = 10,
     errorMeasure = "RMSE",
@@ -703,7 +1071,7 @@ TASWGCE <- function(
     bootMethod = "residuals",
     bootCIMethod = "percentile",
     bootConfLevel = 0.95,
-    method = "dual.BFGS",
+    method = "dual.lbfgsb3c",
     plot1 = FALSE,
     plot2 = TRUE,
     plot3 = FALSE,
@@ -734,7 +1102,6 @@ TASWGCE <- function(
         covs = covs,
         factors = factors,
         intercept = intercept,
-        caseGLM = caseGLM,
         M = M,
         J = J,
         weight = weight,
