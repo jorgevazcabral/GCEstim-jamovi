@@ -475,7 +475,6 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "errorMeasureWhich",
                     "method",
                     "twostepsN",
-                    "OLS",
                     "seed",
                     "bootstrap",
                     "bootB",
@@ -489,6 +488,36 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Table$new(
                 options=options,
                 name="modelSummary",
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "M",
+                    "J",
+                    "weight",
+                    "ridgeSignalSupport",
+                    "noiseSupportMethod",
+                    "ridgeLambdaMin",
+                    "ridgeLambdaMax",
+                    "ridgeLambdaN",
+                    "supportSignal",
+                    "supportSignalVectorN",
+                    "supportSignalVectorMin",
+                    "supportSignalVectorMax",
+                    "cvNfolds",
+                    "errorMeasure",
+                    "errorMeasureWhich",
+                    "method",
+                    "twostepsN",
+                    "seed",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "bootConfLevel"),
                 title="Model Summary",
                 columns=list(
                     list(
@@ -502,6 +531,36 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Table$new(
                 options=options,
                 name="signalSupports",
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "M",
+                    "J",
+                    "weight",
+                    "ridgeSignalSupport",
+                    "noiseSupportMethod",
+                    "ridgeLambdaMin",
+                    "ridgeLambdaMax",
+                    "ridgeLambdaN",
+                    "supportSignal",
+                    "supportSignalVectorN",
+                    "supportSignalVectorMin",
+                    "supportSignalVectorMax",
+                    "cvNfolds",
+                    "errorMeasure",
+                    "errorMeasureWhich",
+                    "method",
+                    "twostepsN",
+                    "seed",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "bootConfLevel"),
                 title="Signal Supports",
                 columns=list(
                     list(
@@ -519,7 +578,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plotCV",
-                title="Cross-validation error by support combination",
+                title="Cross-Validation Error by Support Combination",
                 clearWith=list(
                     "data",
                     "run",
@@ -557,7 +616,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Table$new(
                 options=options,
                 name="cvResults",
-                title="Cross-validation results",
+                title="Cross-Validation Results",
                 rows="(min(cvTableRows, length(unique(as.numeric(strsplit(M, \",\")[[1]]))) * length(unique(as.numeric(strsplit(J, \",\")[[1]]))) * length(unique(as.numeric(strsplit(weight, \",\")[[1]])))))",
                 clearWith=list(
                     "data",
@@ -623,7 +682,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plotRidge",
-                title="Ridge trace",
+                title="Ridge Trace",
                 clearWith=list(
                     "data",
                     "run",
@@ -686,7 +745,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `visible`="(bootstrap == 0)"),
                     list(
                         `name`="z", 
-                        `title`="z", 
+                        `title`="z value", 
                         `type`="number", 
                         `visible`="(bootstrap == 0)"),
                     list(
@@ -698,7 +757,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Table$new(
                 options=options,
                 name="signalProbabilities",
-                title="Estimated signal support probabilities (p)",
+                title="Estimated Signal Support Probabilities (p)",
                 columns=list(
                     list(
                         `name`="term", 
@@ -707,7 +766,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot1",
-                title="Estimates and confidence intervals",
+                title="Estimates and Confidence Intervals",
                 clearWith=list(
                     "data",
                     "run",
@@ -745,7 +804,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot2",
-                title="Supports vs prediction error",
+                title="Supports vs Prediction Error",
                 clearWith=list(
                     "data",
                     "run",
@@ -784,7 +843,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot3",
-                title="Supports vs estimates",
+                title="Supports vs Estimates",
                 clearWith=list(
                     "data",
                     "run",
@@ -822,7 +881,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot4",
-                title="Supports vs normalized entropy",
+                title="Supports vs Normalized Entropy",
                 clearWith=list(
                     "data",
                     "run",
@@ -860,7 +919,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot5",
-                title="Supports vs precision error",
+                title="Supports vs Precision Error",
                 clearWith=list(
                     "data",
                     "run",
@@ -900,7 +959,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot6",
-                title="GCE reestimation vs prediction error",
+                title="GCE Re-estimation vs Prediction Error",
                 clearWith=list(
                     "data",
                     "run",
@@ -938,7 +997,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot7",
-                title="GCE reestimation vs precision error",
+                title="GCE Re-estimation vs Precision Error",
                 clearWith=list(
                     "data",
                     "run",

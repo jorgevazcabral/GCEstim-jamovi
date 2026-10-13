@@ -13,6 +13,28 @@ items:
   - name: modelSummary
     title: Model Summary
     type: Table
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - supportSignalLowers
+      - supportSignalUppers
+      - M
+      - J
+      - weight
+      - supportNoise3sig
+      - supportNoiseMin
+      - supportNoiseMax
+      - method
+      - bootConfLevel
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - seed
     columns:
       - name: measure
         title: Measure
@@ -24,6 +46,28 @@ items:
   - name: signalSupports
     title: Signal Supports
     type: Table
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - supportSignalLowers
+      - supportSignalUppers
+      - M
+      - J
+      - weight
+      - supportNoise3sig
+      - supportNoiseMin
+      - supportNoiseMax
+      - method
+      - bootConfLevel
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - seed
     columns:
       - name: term
         title: Coefficient
@@ -38,6 +82,28 @@ items:
   - name: coefficients
     title: Coefficients
     type: Table
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - supportSignalLowers
+      - supportSignalUppers
+      - M
+      - J
+      - weight
+      - supportNoise3sig
+      - supportNoiseMin
+      - supportNoiseMax
+      - method
+      - bootConfLevel
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - seed
     columns:
       - name: term
         title: Term
@@ -68,6 +134,30 @@ items:
   - name: plot1
     title: Estimates and confidence intervals
     type: Image
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - supportSignalLowers
+      - supportSignalUppers
+      - M
+      - J
+      - weight
+      - supportNoise3sig
+      - supportNoiseMin
+      - supportNoiseMax
+      - method
+      - bootConfLevel
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - seed
+      - OLS
+      - plot1
     renderFun: .plot1
     visible: (plot1)
 
@@ -96,6 +186,28 @@ items:
   - name: signalProbabilities
     title: Estimated signal support probabilities (p)
     type: Table
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - supportSignalLowers
+      - supportSignalUppers
+      - M
+      - J
+      - weight
+      - supportNoise3sig
+      - supportNoiseMin
+      - supportNoiseMax
+      - method
+      - bootConfLevel
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - seed
     columns:
       - name: term
         title: Coefficient

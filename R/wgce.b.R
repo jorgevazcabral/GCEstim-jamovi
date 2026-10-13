@@ -282,7 +282,7 @@ WGCEClass <- R6::R6Class(
             boot.B = bootB,
             boot.method = self$options$bootMethod,
             seed = self$options$seed,
-            OLS = self$options$OLS
+            OLS = TRUE
           ),
           warning = function(w) {
             warnings <<- c(warnings, conditionMessage(w))
@@ -480,7 +480,11 @@ WGCEClass <- R6::R6Class(
         plot1 <- tryCatch(
           plot(fit, which = 1,
                ci.level = self$options$bootConfLevel,
-               ci.method = if (hasCI) self$options$bootCIMethod else "z",
+               ci.method = ifelse(
+                 self$options$bootstrap,
+                 self$options$bootCIMethod,
+                 "z"
+               ),
                OLS = self$options$OLS)[["p1"]],
           error = function(e) {
             warnings <<- c(warnings, paste0("Plot: ", conditionMessage(e)))

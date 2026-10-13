@@ -333,7 +333,7 @@ TASWGCEClass <- R6::R6Class(
           caseGLM = "D",
           boot.B = bootB,
           boot.method = bootMethod,
-          OLS = self$options$OLS,
+          OLS = TRUE,
           seed = self$options$seed
         ),
         warning = function(w) {
@@ -356,6 +356,8 @@ TASWGCEClass <- R6::R6Class(
             code = "fit_failed", message = conditionMessage(fit))
         }
       }
+
+      fitWarningMsg <- warningMsg
 
       bestFit <- fit$best
 
@@ -472,7 +474,7 @@ TASWGCEClass <- R6::R6Class(
         self$results$fitCache$setState(list(
           fit = fit,
           ci = ci,
-          warningMsg = warningMsg,
+          warningMsg = fitWarningMsg,
           fitElapsed = fitElapsed
         ))
       }
@@ -637,7 +639,11 @@ TASWGCEClass <- R6::R6Class(
         nrow(cvResults)
       )
       
+      measure <- as.character(self$options$errorMeasure)
       cvTable <- self$results$cvResults
+      
+      cvTable$getColumn("errorMeasure")$setTitle(paste("In-sample", measure))
+      cvTable$getColumn("cvMean")$setTitle(paste("CV", measure))
       
       if (nCVRows > 0) {
         

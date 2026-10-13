@@ -349,7 +349,7 @@ TARWGCEClass <- R6::R6Class(
             caseGLM = "D",
             boot.B = bootB,
             boot.method = bootMethod,
-            OLS = self$options$OLS,
+            OLS = TRUE,
             seed = self$options$seed
           ),
           warning = function(w) {
@@ -723,7 +723,12 @@ TARWGCEClass <- R6::R6Class(
         nrow(cvResults)
       )
       
+      measure <- as.character(self$options$errorMeasure)
+      
       cvTable <- self$results$cvResults
+      
+      cvTable$getColumn("errorMeasure")$setTitle(paste("In-sample", measure))
+      cvTable$getColumn("cvMean")$setTitle(paste("CV", measure))
       
       if (nCVRows > 0) {
         

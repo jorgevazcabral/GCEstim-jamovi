@@ -3,8 +3,6 @@ name: WGCE
 jus: '3.0'
 compilerMode: tame
 children:
-  - type: CheckBox
-    name: run
   - type: VariableSupplier
     persistentItems: false
     stretchFactor: 1
@@ -43,6 +41,8 @@ children:
               - factor
   - type: CheckBox
     name: intercept
+  - type: CheckBox
+    name: run
   - type: CollapseBox
     label: Signal Support
     collapsed: false

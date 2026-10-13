@@ -16,8 +16,6 @@ module.exports = {
 
         control.setPropertyValue('enable', available);
 
-        if (!available && control.value())
-            control.setValue(false);
     });
     },
     
@@ -80,8 +78,6 @@ module.exports = {
 
         control.setPropertyValue('enable', available);
 
-        if (!available && control.value())
-            control.setValue(false);
     });
     },
     
@@ -91,9 +87,6 @@ module.exports = {
     const available = nM > 1;
 
     ui.plotCV.setPropertyValue('enable', available);
-
-    if (!available && ui.plotCV.value())
-        ui.plotCV.setValue(false);
       
     },
 
@@ -120,10 +113,6 @@ module.exports = {
 
     this.updatePlotCV(ui);
 
-    const nM = this.countUniqueValues(ui.M.value());
-
-    if (nM > 1 && !ui.plotCV.value())
-        ui.plotCV.setValue(true);
 }
 
 };

@@ -33,7 +33,6 @@ items:
       - errorMeasureWhich
       - method
       - twostepsN
-      - OLS
       - seed
       - bootstrap
       - bootB
@@ -65,7 +64,6 @@ items:
       - errorMeasureWhich
       - method
       - twostepsN
-      - OLS
       - seed
       - bootstrap
       - bootB
@@ -102,7 +100,6 @@ items:
       - errorMeasureWhich
       - method
       - twostepsN
-      - OLS
       - seed
       - bootstrap
       - bootB
@@ -142,7 +139,6 @@ items:
       - errorMeasureWhich
       - method
       - twostepsN
-      - OLS
       - seed
       - bootstrap
       - bootB
@@ -150,7 +146,7 @@ items:
       - bootCIMethod
       - bootConfLevel
       - plotCV
-    title: Cross-validation error by support combination
+    title: Cross-Validation Error by Support Combination
     type: Image
     renderFun: .plotCV
     visible: (plotCV)
@@ -176,7 +172,6 @@ items:
       - errorMeasureWhich
       - method
       - twostepsN
-      - OLS
       - seed
       - bootstrap
       - bootB
@@ -184,7 +179,7 @@ items:
       - bootCIMethod
       - bootConfLevel
       - cvTableRows
-    title: Cross-validation results
+    title: Cross-Validation Results
     type: Table
     columns:
       - name: signalPoints
@@ -235,7 +230,6 @@ items:
       - errorMeasureWhich
       - method
       - twostepsN
-      - OLS
       - seed
       - bootstrap
       - bootB
@@ -297,14 +291,13 @@ items:
       - errorMeasureWhich
       - method
       - twostepsN
-      - OLS
       - seed
       - bootstrap
       - bootB
       - bootMethod
       - bootCIMethod
       - bootConfLevel
-    title: Estimated signal support probabilities (p)
+    title: Estimated Signal Support Probabilities (p)
     type: Table
     columns:
       - name: term
@@ -339,7 +332,7 @@ items:
       - bootCIMethod
       - bootConfLevel
       - plot1
-    title: Estimates and confidence intervals
+    title: Estimates and Confidence Intervals
     type: Image
     renderFun: .plot1
     visible: (plot1)
@@ -373,7 +366,7 @@ items:
       - bootConfLevel
       - plot2
       - NormEnt
-    title: Supports vs prediction error
+    title: Supports vs Prediction Error
     type: Image
     renderFun: .plot2
     visible: (plot2 && supportSignalVectorN > 1)
@@ -406,7 +399,7 @@ items:
       - bootCIMethod
       - bootConfLevel
       - plot3
-    title: Supports vs estimates
+    title: Supports vs Estimates
     type: Image
     renderFun: .plot3
     visible: (plot3 && supportSignalVectorN > 1)
@@ -439,7 +432,7 @@ items:
       - bootCIMethod
       - bootConfLevel
       - plot4
-    title: Supports vs normalized entropy
+    title: Supports vs Normalized Entropy
     type: Image
     renderFun: .plot4
     visible: (plot4 && supportSignalVectorN > 1)
@@ -474,7 +467,7 @@ items:
       - plot5
       - NormEnt
       - trueCoef
-    title: Supports vs precision error
+    title: Supports vs Precision Error
     type: Image
     renderFun: .plot5
     visible: (plot5 && supportSignalVectorN > 1)
@@ -507,7 +500,7 @@ items:
       - bootCIMethod
       - bootConfLevel
       - plot6
-    title: GCE reestimation vs prediction error
+    title: GCE Re-estimation vs Prediction Error
     type: Image
     renderFun: .plot6
     visible: (plot6 && twostepsN > 0)
@@ -541,7 +534,7 @@ items:
       - bootConfLevel
       - plot7
       - trueCoef
-    title: GCE reestimation vs precision error
+    title: GCE Re-estimation vs Precision Error
     type: Image
     renderFun: .plot7
     visible: (plot7 && twostepsN > 0)

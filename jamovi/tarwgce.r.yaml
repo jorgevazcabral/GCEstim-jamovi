@@ -38,7 +38,6 @@ items:
       - errorMeasureWhich
       - method
       - twostepsN
-      - OLS
       - seed
       - bootstrap
       - bootB
@@ -51,6 +50,36 @@ items:
     type: Html
 
   - name: modelSummary
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - M
+      - J
+      - weight
+      - ridgeSignalSupport
+      - noiseSupportMethod
+      - ridgeLambdaMin
+      - ridgeLambdaMax
+      - ridgeLambdaN
+      - supportSignal
+      - supportSignalVectorN
+      - supportSignalVectorMin
+      - supportSignalVectorMax
+      - cvNfolds
+      - errorMeasure
+      - errorMeasureWhich
+      - method
+      - twostepsN
+      - seed
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - bootConfLevel
     title: Model Summary
     type: Table
     columns:
@@ -62,6 +91,36 @@ items:
         type: text
   
   - name: signalSupports
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - M
+      - J
+      - weight
+      - ridgeSignalSupport
+      - noiseSupportMethod
+      - ridgeLambdaMin
+      - ridgeLambdaMax
+      - ridgeLambdaN
+      - supportSignal
+      - supportSignalVectorN
+      - supportSignalVectorMin
+      - supportSignalVectorMax
+      - cvNfolds
+      - errorMeasure
+      - errorMeasureWhich
+      - method
+      - twostepsN
+      - seed
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - bootConfLevel
     title: Signal Supports
     type: Table
     columns:
@@ -76,7 +135,7 @@ items:
         type: number
 
   - name: plotCV
-    title: Cross-validation error by support combination
+    title: Cross-Validation Error by Support Combination
     type: Image
     clearWith:
       - data
@@ -114,7 +173,7 @@ items:
     visible: (plotCV)
   
   - name: cvResults
-    title: Cross-validation results
+    title: Cross-Validation Results
     type: Table
     rows: (min(cvTableRows, length(unique(as.numeric(strsplit(M, ",")[[1]]))) * length(unique(as.numeric(strsplit(J, ",")[[1]]))) * length(unique(as.numeric(strsplit(weight, ",")[[1]])))))
     clearWith:
@@ -179,7 +238,7 @@ items:
         type: number
   
   - name: plotRidge
-    title: Ridge trace
+    title: Ridge Trace
     type: Image
     clearWith:
       - data
@@ -242,7 +301,7 @@ items:
         visible: (bootstrap == 0)
 
       - name: z
-        title: z
+        title: z value
         type: number
         visible: (bootstrap == 0)
 
@@ -253,7 +312,7 @@ items:
         visible: (bootstrap == 0)
 
   - name: signalProbabilities
-    title: Estimated signal support probabilities (p)
+    title: Estimated Signal Support Probabilities (p)
     type: Table
     columns:
       - name: term
@@ -261,7 +320,7 @@ items:
         type: text
 
   - name: plot1
-    title: Estimates and confidence intervals
+    title: Estimates and Confidence Intervals
     type: Image
     clearWith:
       - data
@@ -299,7 +358,7 @@ items:
     visible: (plot1)
 
   - name: plot2
-    title: Supports vs prediction error
+    title: Supports vs Prediction Error
     type: Image
     clearWith:
       - data
@@ -338,7 +397,7 @@ items:
     visible: (plot2 && supportSignalVectorN > 1)
 
   - name: plot3
-    title: Supports vs estimates
+    title: Supports vs Estimates
     type: Image
     clearWith:
       - data
@@ -376,7 +435,7 @@ items:
     visible: (plot3 && supportSignalVectorN > 1)
 
   - name: plot4
-    title: Supports vs normalized entropy
+    title: Supports vs Normalized Entropy
     type: Image
     clearWith:
       - data
@@ -414,7 +473,7 @@ items:
     visible: (plot4 && supportSignalVectorN > 1)
 
   - name: plot5
-    title: Supports vs precision error
+    title: Supports vs Precision Error
     type: Image
     clearWith:
       - data
@@ -454,7 +513,7 @@ items:
     visible: (plot5 && supportSignalVectorN > 1)
 
   - name: plot6
-    title: GCE reestimation vs prediction error
+    title: GCE Re-estimation vs Prediction Error
     type: Image
     clearWith:
       - data
@@ -492,7 +551,7 @@ items:
     visible: (plot6 && twostepsN > 0)
 
   - name: plot7
-    title: GCE reestimation vs precision error
+    title: GCE Re-estimation vs Precision Error
     type: Image
     clearWith:
       - data

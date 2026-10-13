@@ -412,7 +412,6 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "errorMeasureWhich",
                     "method",
                     "twostepsN",
-                    "OLS",
                     "seed",
                     "bootstrap",
                     "bootB",
@@ -445,7 +444,6 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "errorMeasureWhich",
                     "method",
                     "twostepsN",
-                    "OLS",
                     "seed",
                     "bootstrap",
                     "bootB",
@@ -484,7 +482,6 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "errorMeasureWhich",
                     "method",
                     "twostepsN",
-                    "OLS",
                     "seed",
                     "bootstrap",
                     "bootB",
@@ -527,7 +524,6 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "errorMeasureWhich",
                     "method",
                     "twostepsN",
-                    "OLS",
                     "seed",
                     "bootstrap",
                     "bootB",
@@ -535,7 +531,7 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "bootCIMethod",
                     "bootConfLevel",
                     "plotCV"),
-                title="Cross-validation error by support combination",
+                title="Cross-Validation Error by Support Combination",
                 renderFun=".plotCV",
                 visible="(plotCV)"))
             self$add(jmvcore::Table$new(
@@ -561,7 +557,6 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "errorMeasureWhich",
                     "method",
                     "twostepsN",
-                    "OLS",
                     "seed",
                     "bootstrap",
                     "bootB",
@@ -569,7 +564,7 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "bootCIMethod",
                     "bootConfLevel",
                     "cvTableRows"),
-                title="Cross-validation results",
+                title="Cross-Validation Results",
                 columns=list(
                     list(
                         `name`="signalPoints", 
@@ -621,7 +616,6 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "errorMeasureWhich",
                     "method",
                     "twostepsN",
-                    "OLS",
                     "seed",
                     "bootstrap",
                     "bootB",
@@ -684,14 +678,13 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "errorMeasureWhich",
                     "method",
                     "twostepsN",
-                    "OLS",
                     "seed",
                     "bootstrap",
                     "bootB",
                     "bootMethod",
                     "bootCIMethod",
                     "bootConfLevel"),
-                title="Estimated signal support probabilities (p)",
+                title="Estimated Signal Support Probabilities (p)",
                 columns=list(
                     list(
                         `name`="term", 
@@ -727,7 +720,7 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "bootCIMethod",
                     "bootConfLevel",
                     "plot1"),
-                title="Estimates and confidence intervals",
+                title="Estimates and Confidence Intervals",
                 renderFun=".plot1",
                 visible="(plot1)"))
             self$add(jmvcore::Image$new(
@@ -761,7 +754,7 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "bootConfLevel",
                     "plot2",
                     "NormEnt"),
-                title="Supports vs prediction error",
+                title="Supports vs Prediction Error",
                 renderFun=".plot2",
                 visible="(plot2 && supportSignalVectorN > 1)"))
             self$add(jmvcore::Image$new(
@@ -794,7 +787,7 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "bootCIMethod",
                     "bootConfLevel",
                     "plot3"),
-                title="Supports vs estimates",
+                title="Supports vs Estimates",
                 renderFun=".plot3",
                 visible="(plot3 && supportSignalVectorN > 1)"))
             self$add(jmvcore::Image$new(
@@ -827,7 +820,7 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "bootCIMethod",
                     "bootConfLevel",
                     "plot4"),
-                title="Supports vs normalized entropy",
+                title="Supports vs Normalized Entropy",
                 renderFun=".plot4",
                 visible="(plot4 && supportSignalVectorN > 1)"))
             self$add(jmvcore::Image$new(
@@ -862,7 +855,7 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "plot5",
                     "NormEnt",
                     "trueCoef"),
-                title="Supports vs precision error",
+                title="Supports vs Precision Error",
                 renderFun=".plot5",
                 visible="(plot5 && supportSignalVectorN > 1)"))
             self$add(jmvcore::Image$new(
@@ -895,7 +888,7 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "bootCIMethod",
                     "bootConfLevel",
                     "plot6"),
-                title="GCE reestimation vs prediction error",
+                title="GCE Re-estimation vs Prediction Error",
                 renderFun=".plot6",
                 visible="(plot6 && twostepsN > 0)"))
             self$add(jmvcore::Image$new(
@@ -929,7 +922,7 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "bootConfLevel",
                     "plot7",
                     "trueCoef"),
-                title="GCE reestimation vs precision error",
+                title="GCE Re-estimation vs Precision Error",
                 renderFun=".plot7",
                 visible="(plot7 && twostepsN > 0)"))
             self$add(jmvcore::Output$new(
