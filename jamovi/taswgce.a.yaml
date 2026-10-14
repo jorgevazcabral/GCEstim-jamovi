@@ -83,13 +83,13 @@ options:
     default: 1se
   
   - name: supportSignalVectorMin
-    title: Minimum signal support range
+    title: Minimum flexibility parameter
     type: Number
     default: 0.3
     min: 0.01
   
   - name: supportSignalVectorMax
-    title: Maximum signal support range
+    title: Maximum flexibility parameter
     type: Number
     default: 20
     min: 0.01
@@ -101,7 +101,7 @@ options:
     min: 1
 
   - name: supportSignal
-    title: Signal support value
+    title: Flexibility parameter (single support space)
     type: Number
     default: 1
     min: 0.000001

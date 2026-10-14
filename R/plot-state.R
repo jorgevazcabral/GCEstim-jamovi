@@ -1,6 +1,61 @@
 # Plot states contain plain data; fitted models and ggplot environments stay out of images.
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
+.gcePackFitCache <- function(fit, ci) {
+  bytes <- serialize(list(fit = fit, ci = ci), NULL)
+  as.integer(memCompress(bytes, type = "gzip"))
+}
+
+.gceUnpackFitCache <- function(payload) {
+  if (is.null(payload))
+    return(NULL)
+  
+  tryCatch(
+    unserialize(memDecompress(
+      as.raw(as.integer(unlist(payload, use.names = FALSE))),
+      type = "gzip"
+    )),
+    error = function(e) NULL
+  )
+}
+
+.gceCompactCVFit <- function(fit) {
+  detachTerms <- function(x) {
+    if (!is.null(x) && inherits(x, "terms"))
+      environment(x) <- baseenv()
+    x
+  }
+  
+  best <- fit$best
+  
+  best$terms <- detachTerms(best$terms)
+  
+  if (!is.null(best$model)) {
+    modelTerms <- attr(best$model, "terms")
+    if (!is.null(modelTerms))
+      attr(best$model, "terms") <- detachTerms(modelTerms)
+  }
+  
+  olsFit <- best$results$OLS$res
+  if (!is.null(olsFit)) {
+    olsFit$terms <- detachTerms(olsFit$terms)
+    
+    if (!is.null(olsFit$model)) {
+      olsModelTerms <- attr(olsFit$model, "terms")
+      if (!is.null(olsModelTerms))
+        attr(olsFit$model, "terms") <- detachTerms(olsModelTerms)
+    }
+    
+    best$results$OLS$res <- olsFit
+  }
+  
+  list(
+    best = best,
+    results = as.data.frame(fit$results),
+    support.signal.points.best = fit$support.signal.points.best
+  )
+}
+
 .gceTermColours <- function(terms, theme) {
   terms <- sort(unique(as.character(terms)))
   colours <- theme$color

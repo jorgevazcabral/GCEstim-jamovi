@@ -87,15 +87,15 @@ children:
         format: number
       - type: TextBox
         name: supportSignal
-        label: Signal support value
+        label: Flexibility parameter (single support space)
         format: number
       - type: TextBox
         name: supportSignalVectorMin
-        label: Min. signal support range
+        label: Minimum flexibility parameter
         format: number
       - type: TextBox
         name: supportSignalVectorMax
-        label: Max. signal support range
+        label: Maximum flexibility parameter
         format: number
   - type: CollapseBox
     label: Noise Support

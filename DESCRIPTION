@@ -25,10 +25,7 @@ Imports:
     R6,
     GCEstim (>= 1.1.0),
     stats,
-    graphics,
     ggplot2,
-    png,
-    grid,
     grDevices
 Suggests:
     testthat (>= 3.0.0)

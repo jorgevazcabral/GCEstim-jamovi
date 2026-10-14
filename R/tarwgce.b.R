@@ -251,7 +251,7 @@ TARWGCEClass <- R6::R6Class(
       }
       
       if (self$options$supportSignalVectorMin >= self$options$supportSignalVectorMax) {
-        jmvcore::reject("The minimum signal support range must be smaller than the maximum.", code = "invalid_signal_range")
+        jmvcore::reject("The minimum flexibility parameter must be smaller than the maximum.", code = "invalid_signal_range")
       }
       
       if (self$options$cvNfolds > nrow(data)) {
@@ -308,8 +308,13 @@ TARWGCEClass <- R6::R6Class(
       }
       
       fitCache <- self$results$fitCache$state
-      useCachedFit <- is.list(fitCache) &&
-        !is.null(fitCache$fit) && !is.null(fitCache$ci)
+      cached <- if (is.list(fitCache))
+        .gceUnpackFitCache(fitCache$payload) else NULL
+      
+      useCachedFit <- is.list(cached) &&
+        is.list(cached$fit) &&
+        inherits(cached$fit$best, "lmgce") &&
+        !is.null(cached$ci)
 
       self$results$text$setContent(if (useCachedFit) {
         "<p>Updating results from the fitted model...</p>"
@@ -334,13 +339,13 @@ TARWGCEClass <- R6::R6Class(
           !is.finite(fixedSupportSignal) ||
           fixedSupportSignal <= 0
         ) {
-          jmvcore::reject("The signal support value must be a positive finite number.",
+          jmvcore::reject("The flexibility parameter must be a positive finite number.",
             code = "invalid_signal_support")
         }
       }
       
       if (useCachedFit) {
-        fit <- fitCache$fit
+        fit <- cached$fit
         warningMsg <- fitCache$warningMsg
         fitElapsed <- fitCache$fitElapsed
       } else {
@@ -403,6 +408,12 @@ TARWGCEClass <- R6::R6Class(
       
       if (is.null(bestFit)) {
         jmvcore::reject("Cross-validation did not return a selected model.", code = "no_selected_model")
+      }
+      
+      compactFit <- if (useCachedFit) {
+        fit
+      } else {
+        .gceCompactCVFit(fit)
       }
       
       supportLimits <- as.matrix(bestFit$support.matrix)
@@ -485,7 +496,7 @@ TARWGCEClass <- R6::R6Class(
       ## Confidence Interval
       
       if (useCachedFit) {
-        ci <- fitCache$ci
+        ci <- cached$ci
       } else {
         ci <- NULL
         
@@ -516,10 +527,8 @@ TARWGCEClass <- R6::R6Class(
             code = "ci_failed", message = conditionMessage(ci))
         }
         
-
         self$results$fitCache$setState(list(
-          fit = fit,
-          ci = ci,
+          payload = .gcePackFitCache(compactFit, ci),
           warningMsg = fitWarningMsg,
           fitElapsed = fitElapsed
         ))
@@ -531,7 +540,12 @@ TARWGCEClass <- R6::R6Class(
       ## Summary table
       
       summ <- tryCatch(
-        summary(bestFit),
+        {
+          get("summary.lmgce",
+              envir = asNamespace("GCEstim"),
+              inherits = FALSE
+              )(bestFit)
+        },
         error = function(e) e
       )
       
@@ -615,7 +629,7 @@ TARWGCEClass <- R6::R6Class(
       
       noiseResponse <- as.numeric(data[[dep]])
       
-      ridgeFit <- if (useCachedFit) fitCache$ridgeFit else NULL
+      ridgeFit <- NULL
       if (self$options$noiseSupportMethod == "sigma3") {
         noiseLimit <- 3 * stats::sd(noiseResponse)
       } else if (useCachedFit && !is.null(fitCache$noiseLimit)) {
@@ -643,12 +657,10 @@ TARWGCEClass <- R6::R6Class(
 
       if (!useCachedFit || is.null(fitCache$noiseLimit)) {
         self$results$fitCache$setState(list(
-          fit = fit,
-          ci = ci,
+          payload = .gcePackFitCache(compactFit, ci),
           warningMsg = fitWarningMsg,
           fitElapsed = fitElapsed,
-          noiseLimit = noiseLimit,
-          ridgeFit = ridgeFit
+          noiseLimit = noiseLimit
         ))
       }
       

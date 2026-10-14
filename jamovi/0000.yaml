@@ -6,7 +6,7 @@ jms: '1.0'
 authors:
   - Jorge Cabral
 maintainer: Jorge Cabral <jorgecabral@ua.pt>
-date: '2026-10-12'
+date: '2026-10-14'
 type: R
 description: >-
   A jamovi interface for generalized maximum-entropy and generalized
