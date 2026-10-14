@@ -322,6 +322,8 @@ items:
   - name: plot1
     title: Estimates and Confidence Intervals
     type: Image
+    width: 520
+    height: 400
     clearWith:
       - data
       - run
@@ -360,6 +362,8 @@ items:
   - name: plot2
     title: Supports vs Prediction Error
     type: Image
+    width: 560
+    height: 400
     clearWith:
       - data
       - run
@@ -399,6 +403,8 @@ items:
   - name: plot3
     title: Supports vs Estimates
     type: Image
+    width: 520
+    height: 400
     clearWith:
       - data
       - run
@@ -437,6 +443,8 @@ items:
   - name: plot4
     title: Supports vs Normalized Entropy
     type: Image
+    width: 520
+    height: 400
     clearWith:
       - data
       - run
@@ -475,6 +483,8 @@ items:
   - name: plot5
     title: Supports vs Precision Error
     type: Image
+    width: 560
+    height: 400
     clearWith:
       - data
       - run

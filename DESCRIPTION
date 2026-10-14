@@ -26,6 +26,7 @@ Imports:
     GCEstim (>= 1.1.0),
     stats,
     graphics,
+    ggplot2,
     png,
     grid,
     grDevices

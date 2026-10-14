@@ -767,6 +767,8 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="plot1",
                 title="Estimates and Confidence Intervals",
+                width=520,
+                height=400,
                 clearWith=list(
                     "data",
                     "run",
@@ -805,6 +807,8 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="plot2",
                 title="Supports vs Prediction Error",
+                width=560,
+                height=400,
                 clearWith=list(
                     "data",
                     "run",
@@ -844,6 +848,8 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="plot3",
                 title="Supports vs Estimates",
+                width=520,
+                height=400,
                 clearWith=list(
                     "data",
                     "run",
@@ -882,6 +888,8 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="plot4",
                 title="Supports vs Normalized Entropy",
+                width=520,
+                height=400,
                 clearWith=list(
                     "data",
                     "run",
@@ -920,6 +928,8 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="plot5",
                 title="Supports vs Precision Error",
+                width=560,
+                height=400,
                 clearWith=list(
                     "data",
                     "run",

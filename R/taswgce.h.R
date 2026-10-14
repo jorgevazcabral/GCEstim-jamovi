@@ -721,6 +721,8 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "bootConfLevel",
                     "plot1"),
                 title="Estimates and Confidence Intervals",
+                width=520,
+                height=400,
                 renderFun=".plot1",
                 visible="(plot1)"))
             self$add(jmvcore::Image$new(
@@ -755,6 +757,8 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "plot2",
                     "NormEnt"),
                 title="Supports vs Prediction Error",
+                width=560,
+                height=400,
                 renderFun=".plot2",
                 visible="(plot2 && supportSignalVectorN > 1)"))
             self$add(jmvcore::Image$new(
@@ -788,6 +792,8 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "bootConfLevel",
                     "plot3"),
                 title="Supports vs Estimates",
+                width=520,
+                height=400,
                 renderFun=".plot3",
                 visible="(plot3 && supportSignalVectorN > 1)"))
             self$add(jmvcore::Image$new(
@@ -821,6 +827,8 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "bootConfLevel",
                     "plot4"),
                 title="Supports vs Normalized Entropy",
+                width=520,
+                height=400,
                 renderFun=".plot4",
                 visible="(plot4 && supportSignalVectorN > 1)"))
             self$add(jmvcore::Image$new(
@@ -856,6 +864,8 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "NormEnt",
                     "trueCoef"),
                 title="Supports vs Precision Error",
+                width=560,
+                height=400,
                 renderFun=".plot5",
                 visible="(plot5 && supportSignalVectorN > 1)"))
             self$add(jmvcore::Image$new(

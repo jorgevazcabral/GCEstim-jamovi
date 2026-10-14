@@ -57,8 +57,20 @@ TASWGCEClass <- R6::R6Class(
         trimws(strsplit(self$options$weight, ",", fixed = TRUE)[[1L]])
       ))
       weightValues <- unique(weightValues[is.finite(weightValues)])
+      
+      for (plotName in paste0("plot", 1:5)) {
+        width <- switch(plotName,
+                        plot1 = 520,
+                        plot2 = 560,
+                        plot3 = 520,
+                        plot4 = 520,
+                        plot5 = 560
+        )
+        self$results[[plotName]]$setSize(width, 400)
+      }
+      
       self$results$plotCV$setSize(
-        400,
+        700,
         160 + 140 * max(1L, length(weightValues))
       )
 
@@ -79,6 +91,17 @@ TASWGCEClass <- R6::R6Class(
       dep  <- unlist(self$options$dep)
       covs    <- unlist(self$options$covs)
       factors <- unlist(self$options$factors)
+
+      for (plotName in paste0("plot", 1:5)) {
+        width <- switch(plotName,
+                        plot1 = 520,
+                        plot2 = 560,
+                        plot3 = 520,
+                        plot4 = 520,
+                        plot5 = 560
+        )
+        self$results[[plotName]]$setSize(width, 400)
+      }
       
       self$results$text$setVisible(TRUE)
       
@@ -746,39 +769,14 @@ TASWGCEClass <- R6::R6Class(
         )
       }
       
-      plotToPNG <- function(p, height = 900) {
-        path <- tempfile(fileext = ".png")
-        on.exit(unlink(path), add = TRUE)
-        grDevices::png(path, width = 1200, height = height, res = 150)
-        tryCatch(print(p), finally = grDevices::dev.off())
-        readBin(path, what = "raw", n = file.info(path)$size)
-      }
-
-      # Image state already contains a compact PNG unless its own inputs changed.
-      needsPlot <- function(result) {
+      needsVectorPlot <- function(result) {
         state <- result$state
-        is.null(state) || is.null(state$png)
+        is.null(state) || is.null(state$data)
       }
 
       plots <- list()
 
-      if (self$options$plot1 && needsPlot(self$results$plot1))
-        plots$plot1 <- tryPlot(
-          "Estimates and confidence intervals",
-          plot(
-            bestFit,
-            which = 1,
-            ci.level = self$options$bootConfLevel,
-            ci.method = ifelse(
-              self$options$bootstrap,
-              self$options$bootCIMethod,
-              "z"
-            ),
-            OLS = self$options$OLS
-          )
-        )
-      
-      if (self$options$plot2 && supportGridAvailable && needsPlot(self$results$plot2))
+      if (self$options$plot2 && supportGridAvailable && needsVectorPlot(self$results$plot2))
         plots$plot2 <- tryPlot(
           "Supports vs prediction error",
           plot(
@@ -789,7 +787,7 @@ TASWGCEClass <- R6::R6Class(
           )
         )
       
-      if (self$options$plot3 && supportGridAvailable && needsPlot(self$results$plot3))
+      if (self$options$plot3 && supportGridAvailable && needsVectorPlot(self$results$plot3))
         plots$plot3 <- tryPlot(
           "Supports vs estimates",
           plot(
@@ -799,7 +797,7 @@ TASWGCEClass <- R6::R6Class(
           )
         )
       
-      if (self$options$plot4 && supportGridAvailable && needsPlot(self$results$plot4))
+      if (self$options$plot4 && supportGridAvailable && needsVectorPlot(self$results$plot4))
         plots$plot4 <- tryPlot(
           "Supports vs normalized entropy",
           plot(
@@ -809,7 +807,7 @@ TASWGCEClass <- R6::R6Class(
           )
         )
       
-      if (self$options$plot5 && supportGridAvailable && needsPlot(self$results$plot5))
+      if (self$options$plot5 && supportGridAvailable && needsVectorPlot(self$results$plot5))
         plots$plot5 <- tryPlot(
           "Supports vs precision error",
           plot(
@@ -821,7 +819,7 @@ TASWGCEClass <- R6::R6Class(
           )
         )
       
-      if (self$options$plot6 && reestimationPlotsAvailable && needsPlot(self$results$plot6))
+      if (self$options$plot6 && reestimationPlotsAvailable && needsVectorPlot(self$results$plot6))
         plots$plot6 <- tryPlot(
           "GCE re-estimation vs prediction error",
           plot(
@@ -831,7 +829,7 @@ TASWGCEClass <- R6::R6Class(
           )
         )
       
-      if (self$options$plot7 && reestimationPlotsAvailable && needsPlot(self$results$plot7))
+      if (self$options$plot7 && reestimationPlotsAvailable && needsVectorPlot(self$results$plot7))
         plots$plot7 <- tryPlot(
           "GCE re-estimation vs precision error",
           plot(
@@ -842,16 +840,6 @@ TASWGCEClass <- R6::R6Class(
           )
         )
       
-      if (isTRUE(self$options$plotCV) && cvPlotAvailable && needsPlot(self$results$plotCV))
-        plots$plotCV <- tryPlot(
-          "Cross-validation error by support combination",
-          plot(
-            fit,
-            which = 1,
-            ncol = 1,
-            scales = "free"
-          )
-        )
 
       firstPlot <- function(x) {
         if (inherits(x, "ggplot"))
@@ -863,64 +851,77 @@ TASWGCEClass <- R6::R6Class(
         NULL
       }
 
-      setPlotPNG <- function(result, x, label, height = 900) {
+      setDiagnosticState <- function(result, x, which, label, showNEP = FALSE) {
         p <- firstPlot(x)
-        pngBytes <- if (is.null(p)) {
-          NULL
-        } else {
-          tryPlot(label, plotToPNG(p, height = height))
-        }
-        result$setState(list(png = pngBytes))
+        supportLines <- if (which %in% 2L:5L)
+          .gceSupportLines(bestFit) else NULL
+        ols <- if (which == 3L && isTRUE(self$options$OLS))
+          .gceOLSState(bestFit) else NULL
+        result$setState(tryPlot(
+          label, .gceDiagnosticState(p, which, showNEP = showNEP,
+                                     supportLines = supportLines, ols = ols,
+                                     selectedSupport = if (which %in% c(2L, 5L))
+                                       bestFit$support.stdUL else NULL,
+                                     selectedError = if (which == 2L)
+                                       bestFit$error.measure.cv.mean else NULL,
+                                     selectedNEP = if (which == 2L)
+                                       bestFit$nep.cv.mean else if (which == 5L)
+                                         bestFit$nep else NULL
+                                     )))
       }
 
-      if (self$options$plot1 && needsPlot(self$results$plot1))
-        setPlotPNG(
-          self$results$plot1, plots$plot1,
-          "Estimates and confidence intervals"
+      if (self$options$plot1 && needsVectorPlot(self$results$plot1))
+        self$results$plot1$setState(.gceEstimateState(
+          bestFit, ci, self$options$bootConfLevel,
+          if (self$options$bootstrap) self$options$bootCIMethod else 'z',
+          includeOLS = self$options$OLS
+        ))
+
+      if (self$options$plot2 && supportGridAvailable &&
+          needsVectorPlot(self$results$plot2))
+        setDiagnosticState(
+          self$results$plot2, plots$plot2, 2L,
+          "Supports vs prediction error", showNEP = self$options$NormEnt
         )
 
-      if (self$options$plot2 && supportGridAvailable && needsPlot(self$results$plot2))
-        setPlotPNG(
-          self$results$plot2, plots$plot2,
-          "Supports vs prediction error"
+      if (self$options$plot3 && supportGridAvailable &&
+          needsVectorPlot(self$results$plot3))
+        setDiagnosticState(
+          self$results$plot3, plots$plot3, 3L,
+          "Supports vs estimates", showNEP = FALSE
         )
 
-      if (self$options$plot3 && supportGridAvailable && needsPlot(self$results$plot3))
-        setPlotPNG(
-          self$results$plot3, plots$plot3,
-          "Supports vs estimates"
+      if (self$options$plot4 && supportGridAvailable &&
+          needsVectorPlot(self$results$plot4))
+        setDiagnosticState(
+          self$results$plot4, plots$plot4, 4L,
+          "Supports vs normalized entropy", showNEP = FALSE
         )
 
-      if (self$options$plot4 && supportGridAvailable && needsPlot(self$results$plot4))
-        setPlotPNG(
-          self$results$plot4, plots$plot4,
-          "Supports vs normalized entropy"
+      if (self$options$plot5 && supportGridAvailable &&
+          needsVectorPlot(self$results$plot5))
+        setDiagnosticState(
+          self$results$plot5, plots$plot5, 5L,
+          "Supports vs precision error", showNEP = self$options$NormEnt
         )
 
-      if (self$options$plot5 && supportGridAvailable && needsPlot(self$results$plot5))
-        setPlotPNG(
-          self$results$plot5, plots$plot5,
-          "Supports vs precision error"
+      if (self$options$plot6 && reestimationPlotsAvailable &&
+          needsVectorPlot(self$results$plot6))
+        setDiagnosticState(
+          self$results$plot6, plots$plot6, 6L,
+          "GCE re-estimation vs prediction error", showNEP = FALSE
         )
 
-      if (self$options$plot6 && reestimationPlotsAvailable && needsPlot(self$results$plot6))
-        setPlotPNG(
-          self$results$plot6, plots$plot6,
-          "GCE re-estimation vs prediction error"
+      if (self$options$plot7 && reestimationPlotsAvailable &&
+          needsVectorPlot(self$results$plot7))
+        setDiagnosticState(
+          self$results$plot7, plots$plot7, 7L,
+          "GCE re-estimation vs precision error", showNEP = FALSE
         )
 
-      if (self$options$plot7 && reestimationPlotsAvailable && needsPlot(self$results$plot7))
-        setPlotPNG(
-          self$results$plot7, plots$plot7,
-          "GCE re-estimation vs precision error"
-        )
-
-      if (isTRUE(self$options$plotCV) && cvPlotAvailable && needsPlot(self$results$plotCV))
-        setPlotPNG(
-          self$results$plotCV, plots$plotCV,
-          "Cross-validation error by support combination",
-          height = round(3 * (160 + 140 * length(weightValues)))
-        )
+      if (isTRUE(self$options$plotCV) && cvPlotAvailable &&
+          needsVectorPlot(self$results$plotCV))
+        self$results$plotCV$setState(.gceCVState(fit))
 
       ## Complete
       
@@ -957,28 +958,21 @@ TASWGCEClass <- R6::R6Class(
       
     },
     
-    .plot1 = function(image, ggtheme, theme) private$.printPNG(image),
-    .plot2 = function(image, ggtheme, theme) private$.printPNG(image),
-    .plot3 = function(image, ggtheme, theme) private$.printPNG(image),
-    .plot4 = function(image, ggtheme, theme) private$.printPNG(image),
-    .plot5 = function(image, ggtheme, theme) private$.printPNG(image),
-    .plot6 = function(image, ggtheme, theme) private$.printPNG(image),
-    .plot7 = function(image, ggtheme, theme) private$.printPNG(image),
-    .plotCV = function(image, ggtheme, theme) private$.printPNG(image),
-
-    .printPNG = function(image) {
-      if (is.null(image$state) || is.null(image$state$png))
-        return(FALSE)
-
-      grid::grid.newpage()
-      grid::grid.raster(
-        png::readPNG(image$state$png, native = TRUE),
-        width = grid::unit(1, "npc"),
-        height = grid::unit(1, "npc"),
-        interpolate = TRUE
-      )
-      TRUE
-    }
-
+    .plot1 = function(image, ggtheme, theme)
+      .gceRenderEstimates(image, ggtheme, theme),
+    .plot2 = function(image, ggtheme, theme)
+      .gceRenderDiagnostic(image, ggtheme, theme),
+    .plot3 = function(image, ggtheme, theme)
+      .gceRenderDiagnostic(image, ggtheme, theme),
+    .plot4 = function(image, ggtheme, theme)
+      .gceRenderDiagnostic(image, ggtheme, theme),
+    .plot5 = function(image, ggtheme, theme)
+      .gceRenderDiagnostic(image, ggtheme, theme),
+    .plot6 = function(image, ggtheme, theme)
+      .gceRenderDiagnostic(image, ggtheme, theme),
+    .plot7 = function(image, ggtheme, theme)
+      .gceRenderDiagnostic(image, ggtheme, theme),
+    .plotCV = function(image, ggtheme, theme)
+      .gceRenderCV(image, ggtheme, theme)
   )
 )

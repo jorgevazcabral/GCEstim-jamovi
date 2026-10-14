@@ -334,6 +334,8 @@ items:
       - plot1
     title: Estimates and Confidence Intervals
     type: Image
+    width: 520
+    height: 400
     renderFun: .plot1
     visible: (plot1)
 
@@ -368,6 +370,8 @@ items:
       - NormEnt
     title: Supports vs Prediction Error
     type: Image
+    width: 560
+    height: 400
     renderFun: .plot2
     visible: (plot2 && supportSignalVectorN > 1)
 
@@ -401,6 +405,8 @@ items:
       - plot3
     title: Supports vs Estimates
     type: Image
+    width: 520
+    height: 400
     renderFun: .plot3
     visible: (plot3 && supportSignalVectorN > 1)
 
@@ -434,6 +440,8 @@ items:
       - plot4
     title: Supports vs Normalized Entropy
     type: Image
+    width: 520
+    height: 400
     renderFun: .plot4
     visible: (plot4 && supportSignalVectorN > 1)
 
@@ -469,6 +477,8 @@ items:
       - trueCoef
     title: Supports vs Precision Error
     type: Image
+    width: 560
+    height: 400
     renderFun: .plot5
     visible: (plot5 && supportSignalVectorN > 1)
 

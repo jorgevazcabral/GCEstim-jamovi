@@ -475,23 +475,11 @@ WGCEClass <- R6::R6Class(
       }
 
       if (self$options$plot1) {
-        self$results$text$setContent("<p>Tables completed. Plotting...</p>")
-        private$.checkpoint()
-        plot1 <- tryCatch(
-          plot(fit, which = 1,
-               ci.level = self$options$bootConfLevel,
-               ci.method = ifelse(
-                 self$options$bootstrap,
-                 self$options$bootCIMethod,
-                 "z"
-               ),
-               OLS = self$options$OLS)[["p1"]],
-          error = function(e) {
-            warnings <<- c(warnings, paste0("Plot: ", conditionMessage(e)))
-            NULL
-          }
-        )
-        self$results$plot1$setState(list(p = plot1))
+        self$results$plot1$setState(.gceEstimateState(
+          fit, ci, self$options$bootConfLevel,
+          if (self$options$bootstrap) self$options$bootCIMethod else 'z',
+          includeOLS = self$options$OLS
+        ))
       }
 
       if (length(warnings)) {
@@ -516,14 +504,7 @@ WGCEClass <- R6::R6Class(
 
     },
 
-    .plot1 = function(image, ggtheme, theme) {
-      p <- image$state$p
-      
-      if (is.null(p))
-        return(FALSE)
-      
-      print(p)
-      TRUE
-    }
+    .plot1 = function(image, ggtheme, theme)
+      .gceRenderEstimates(image, ggtheme, theme)
   )
 )
