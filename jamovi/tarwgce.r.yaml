@@ -44,6 +44,7 @@ items:
       - bootMethod
       - bootCIMethod
       - bootConfLevel
+      - trueCoef
 
   - name: text
     title: Status

@@ -480,7 +480,8 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "bootB",
                     "bootMethod",
                     "bootCIMethod",
-                    "bootConfLevel")))
+                    "bootConfLevel",
+                    "trueCoef")))
             self$add(jmvcore::Html$new(
                 options=options,
                 name="text",

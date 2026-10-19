@@ -1,8 +1,9 @@
 # Plot states contain plain data; fitted models and ggplot environments stay out of images.
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
-.gcePackFitCache <- function(fit, ci) {
-  bytes <- serialize(list(fit = fit, ci = ci), NULL)
+.gcePackFitCache <- function(fit, ci, coefficients, plots) {
+  bytes <- serialize(list(version = 3L, fit = fit, ci = ci,
+                          coefficients = coefficients, plots = plots), NULL)
   as.integer(memCompress(bytes, type = "gzip"))
 }
 
@@ -20,40 +21,69 @@
 }
 
 .gceCompactCVFit <- function(fit) {
-  detachTerms <- function(x) {
-    if (!is.null(x) && inherits(x, "terms"))
-      environment(x) <- baseenv()
-    x
-  }
-  
   best <- fit$best
-  
-  best$terms <- detachTerms(best$terms)
-  
-  if (!is.null(best$model)) {
-    modelTerms <- attr(best$model, "terms")
-    if (!is.null(modelTerms))
-      attr(best$model, "terms") <- detachTerms(modelTerms)
-  }
-  
-  olsFit <- best$results$OLS$res
-  if (!is.null(olsFit)) {
-    olsFit$terms <- detachTerms(olsFit$terms)
-    
-    if (!is.null(olsFit$model)) {
-      olsModelTerms <- attr(olsFit$model, "terms")
-      if (!is.null(olsModelTerms))
-        attr(olsFit$model, "terms") <- detachTerms(olsModelTerms)
-    }
-    
-    best$results$OLS$res <- olsFit
-  }
-  
   list(
-    best = best,
+    best = list(
+      support.matrix = as.matrix(best$support.matrix),
+      p = as.matrix(best$p),
+      w = as.matrix(best$w),
+      fitted.values = as.numeric(best$fitted.values),
+      residuals = as.numeric(best$residuals)
+    ),
     results = as.data.frame(fit$results),
     support.signal.points.best = fit$support.signal.points.best
   )
+}
+
+# Generate all available plot data while the selected GCEstim model exists.
+# The returned states contain data frames and atomic values only.
+.gceCachePlotStates <- function(fit, ci, level, method, trueCoef,
+                                supportGridAvailable,
+                                reestimationPlotsAvailable,
+                                cvPlotAvailable) {
+  best <- fit$best
+  warnings <- character()
+  safely <- function(label, expr) tryCatch(expr, error = function(e) {
+    warnings <<- c(warnings, paste0(label, ": ", conditionMessage(e)))
+    NULL
+  })
+  states <- list(
+    plot1 = safely("Estimates and confidence intervals",
+                   .gceEstimateState(best, ci, level, method, includeOLS = TRUE)),
+    plotCV = if (cvPlotAvailable) safely("Cross-validation error",
+                                        .gceCVState(fit)) else NULL
+  )
+  ols <- safely("OLS comparison", .gceOLSState(best))
+  for (which in 2L:7L) {
+    if ((which %in% 2L:5L && !supportGridAvailable) ||
+        (which %in% 6L:7L && !reestimationPlotsAvailable) ||
+        (which %in% c(5L, 7L) && is.null(trueCoef)))
+      next
+    key <- paste0("plot", which)
+    states[[key]] <- safely(key, {
+      plotFit <- best
+      if (which == 5L) {
+        # GCEstim's precision plot uses every support fit, but its x values
+        # include only successful supports. Align them if a candidate failed.
+        sr <- best$results$nocv$support.results
+        plotFit$results$nocv$support.results <-
+          sr[c(as.character(best$support.ok), tail(names(sr), 3L))]
+      }
+      p <- plot(plotFit, which = which, coef = trueCoef,
+                OLS = TRUE, NormEnt = TRUE)
+      if (is.list(p) && !inherits(p, "ggplot")) p <- p[[1L]]
+      .gceDiagnosticState(
+        p, which, showNEP = FALSE,
+        supportLines = if (which %in% 2L:5L) .gceSupportLines(best) else NULL,
+        ols = if (which == 3L) ols else NULL,
+        selectedSupport = if (which %in% c(2L, 5L)) best$support.stdUL else NULL,
+        selectedError = if (which == 2L) best$error.measure.cv.mean else NULL,
+        selectedNEP = if (which == 2L) best$nep.cv.mean else if (which == 5L)
+          best$nep else NULL
+      )
+    })
+  }
+  list(states = states, warnings = warnings)
 }
 
 .gceTermColours <- function(terms, theme) {
@@ -325,8 +355,15 @@
       x
   else
     NULL
+  # Keep only the columns read by .gceRenderDiagnostic. In particular, do not
+  # retain arbitrary attributes or model objects attached to a plot's data.
+  plotData <- as.data.frame(plot$data)
+  plotData <- plotData[, intersect(
+    c("support", "predictor", "estimate", "nepk", "error", "nep",
+      "error.LL", "error.UL", "nep.LL", "nep.UL"), names(plotData)
+  ), drop = FALSE]
   list(
-    data = as.data.frame(plot$data),
+    data = plotData,
     which = as.integer(which),
     overlays = overlays,
     showNEP = isTRUE(showNEP),

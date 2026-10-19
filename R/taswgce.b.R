@@ -158,7 +158,9 @@ TASWGCEClass <- R6::R6Class(
         isTRUE(self$options$plot7) && reestimationPlotsAvailable
       )
 
-      needsTrueCoef <- self$options$plot5 || self$options$plot7
+      needsTrueCoef <- isTRUE(self$options$plot5) ||
+        isTRUE(self$options$plot7) ||
+        isTRUE(nzchar(trimws(as.character(self$options$trueCoef))))
       
       trueCoef <- NULL
       
@@ -303,8 +305,9 @@ TASWGCEClass <- R6::R6Class(
         .gceUnpackFitCache(fitCache$payload) else NULL
       
       useCachedFit <- is.list(cached) &&
-        is.list(cached$fit) &&
-        inherits(cached$fit$best, "lmgce") &&
+        identical(cached$version, 3L) &&
+        is.list(cached$fit$best) &&
+        is.matrix(cached$coefficients) &&
         !is.null(cached$ci)
 
       self$results$text$setContent(if (useCachedFit) {
@@ -393,15 +396,11 @@ TASWGCEClass <- R6::R6Class(
         jmvcore::reject("Cross-validation did not return a selected model.", code = "no_selected_model")
       }
       
-      compactFit <- if (useCachedFit) {
-        fit
-      } else {
-        .gceCompactCVFit(fit)
-      }
+      compactFit <- if (useCachedFit) fit else .gceCompactCVFit(fit)
 
       if (!useCachedFit)
         fitElapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
-      
+
       supportLimits <- as.matrix(bestFit$support.matrix)
       supportTable <- self$results$signalSupports
       supportTable$setTitle(sprintf(
@@ -505,11 +504,7 @@ TASWGCEClass <- R6::R6Class(
             code = "ci_failed", message = conditionMessage(ci))
         }
 
-        self$results$fitCache$setState(list(
-          payload = .gcePackFitCache(compactFit, ci),
-          warningMsg = fitWarningMsg,
-          fitElapsed = fitElapsed
-        ))
+
       }
       
       self$results$text$setContent("<p>CI completed. Filling tables...</p>")
@@ -517,16 +512,16 @@ TASWGCEClass <- R6::R6Class(
       
       ## Summary table
       
-      summ <- tryCatch(
-        {
-          get("summary.lmgce",
-              envir = asNamespace("GCEstim"),
-              inherits = FALSE
-              )(bestFit)
-        },
-        error = function(e) e
-      )
-      
+      summ <- if (useCachedFit) {
+        list(coefficients = cached$coefficients)
+      } else {
+        tryCatch(
+          get("summary.lmgce", envir = asNamespace("GCEstim"),
+              inherits = FALSE)(bestFit),
+          error = function(e) e
+        )
+      }
+
       if (inherits(summ, "error")) {
         jmvcore::reject("Model summary: {message}",
           code = "summary_failed", message = conditionMessage(summ))
@@ -769,174 +764,51 @@ TASWGCEClass <- R6::R6Class(
       self$results$text$setContent("<p>Tables completed. Plotting...</p>")
       private$.checkpoint()
       
-      plotWarnings <- character()
-      
-      tryPlot <- function(label, expr) {
-        tryCatch(
-          expr,
-          error = function(e) {
-            plotWarnings <<- c(
-              plotWarnings,
-              paste0(label, ": ", conditionMessage(e))
-            )
-            NULL
-          }
+      if (useCachedFit) {
+        plotStates <- cached$plots
+        plotWarnings <- fitCache$plotWarnings %||% character()
+      } else {
+        prepared <- .gceCachePlotStates(
+          fit, ci, self$options$bootConfLevel,
+          if (self$options$bootstrap) self$options$bootCIMethod else "z",
+          trueCoef, supportGridAvailable, reestimationPlotsAvailable,
+          cvPlotAvailable
         )
-      }
-      
-      needsVectorPlot <- function(result) {
-        state <- result$state
-        is.null(state) || is.null(state$data)
+        plotStates <- prepared$states
+        plotWarnings <- prepared$warnings
       }
 
-      plots <- list()
-
-      if (self$options$plot2 && supportGridAvailable && needsVectorPlot(self$results$plot2))
-        plots$plot2 <- tryPlot(
-          "Supports vs prediction error",
-          plot(
-            bestFit,
-            which = 2,
-            OLS = self$options$OLS,
-            NormEnt = self$options$NormEnt
-          )
-        )
-      
-      if (self$options$plot3 && supportGridAvailable && needsVectorPlot(self$results$plot3))
-        plots$plot3 <- tryPlot(
-          "Supports vs estimates",
-          plot(
-            bestFit,
-            which = 3,
-            OLS = self$options$OLS
-          )
-        )
-      
-      if (self$options$plot4 && supportGridAvailable && needsVectorPlot(self$results$plot4))
-        plots$plot4 <- tryPlot(
-          "Supports vs normalized entropy",
-          plot(
-            bestFit,
-            which = 4,
-            OLS = self$options$OLS
-          )
-        )
-      
-      if (self$options$plot5 && supportGridAvailable && needsVectorPlot(self$results$plot5))
-        plots$plot5 <- tryPlot(
-          "Supports vs precision error",
-          plot(
-            bestFit,
-            which = 5,
-            coef = trueCoef,
-            OLS = self$options$OLS,
-            NormEnt = self$options$NormEnt
-          )
-        )
-      
-      if (self$options$plot6 && reestimationPlotsAvailable && needsVectorPlot(self$results$plot6))
-        plots$plot6 <- tryPlot(
-          "GCE re-estimation vs prediction error",
-          plot(
-            bestFit,
-            which = 6,
-            OLS = self$options$OLS
-          )
-        )
-      
-      if (self$options$plot7 && reestimationPlotsAvailable && needsVectorPlot(self$results$plot7))
-        plots$plot7 <- tryPlot(
-          "GCE re-estimation vs precision error",
-          plot(
-            bestFit,
-            which = 7,
-            coef = trueCoef,
-            OLS = self$options$OLS
-          )
-        )
-      
-
-      firstPlot <- function(x) {
-        if (inherits(x, "ggplot"))
-          return(x)
-        if (is.null(x) || length(x) == 0L)
-          return(NULL)
-        if (inherits(x[[1L]], "ggplot"))
-          return(x[[1L]])
-        NULL
+      # Presentation choices change image state, never the fitted result.
+      selectedPlots <- c("plot1", paste0("plot", 2:7), "plotCV")
+      for (key in selectedPlots) {
+        if (!isTRUE(self$options[[key]]) || is.null(plotStates[[key]]))
+          next
+        result <- self$results[[key]]
+        current <- result$state
+        if (!is.null(current) && !is.null(current$data))
+          next
+        state <- plotStates[[key]]
+        if (key == "plot1" && !isTRUE(self$options$OLS))
+          state$data$ols <- NA_real_
+        if (key == "plot3" && !isTRUE(self$options$OLS))
+          state$ols <- NULL
+        if (!isTRUE(self$options$OLS))
+          state$overlays <- Filter(function(x) !"yintercept" %in% names(x),
+                                   state$overlays)
+        if (key %in% c("plot2", "plot5"))
+          state$showNEP <- isTRUE(self$options$NormEnt)
+        result$setState(state)
       }
 
-      setDiagnosticState <- function(result, x, which, label, showNEP = FALSE) {
-        p <- firstPlot(x)
-        supportLines <- if (which %in% 2L:5L)
-          .gceSupportLines(bestFit) else NULL
-        ols <- if (which == 3L && isTRUE(self$options$OLS))
-          .gceOLSState(bestFit) else NULL
-        result$setState(tryPlot(
-          label, .gceDiagnosticState(p, which, showNEP = showNEP,
-                                     supportLines = supportLines, ols = ols,
-                                     selectedSupport = if (which %in% c(2L, 5L))
-                                       bestFit$support.stdUL else NULL,
-                                     selectedError = if (which == 2L)
-                                       bestFit$error.measure.cv.mean else NULL,
-                                     selectedNEP = if (which == 2L)
-                                       bestFit$nep.cv.mean else if (which == 5L)
-                                         bestFit$nep else NULL
-                                     )))
-      }
-
-      if (self$options$plot1 && needsVectorPlot(self$results$plot1))
-        self$results$plot1$setState(.gceEstimateState(
-          bestFit, ci, self$options$bootConfLevel,
-          if (self$options$bootstrap) self$options$bootCIMethod else 'z',
-          includeOLS = self$options$OLS
+      if (!useCachedFit) {
+        self$results$fitCache$setState(list(
+          payload = .gcePackFitCache(compactFit, ci,
+                                     as.matrix(summ$coefficients), plotStates),
+          warningMsg = fitWarningMsg,
+          plotWarnings = plotWarnings,
+          fitElapsed = fitElapsed
         ))
-
-      if (self$options$plot2 && supportGridAvailable &&
-          needsVectorPlot(self$results$plot2))
-        setDiagnosticState(
-          self$results$plot2, plots$plot2, 2L,
-          "Supports vs prediction error", showNEP = self$options$NormEnt
-        )
-
-      if (self$options$plot3 && supportGridAvailable &&
-          needsVectorPlot(self$results$plot3))
-        setDiagnosticState(
-          self$results$plot3, plots$plot3, 3L,
-          "Supports vs estimates", showNEP = FALSE
-        )
-
-      if (self$options$plot4 && supportGridAvailable &&
-          needsVectorPlot(self$results$plot4))
-        setDiagnosticState(
-          self$results$plot4, plots$plot4, 4L,
-          "Supports vs normalized entropy", showNEP = FALSE
-        )
-
-      if (self$options$plot5 && supportGridAvailable &&
-          needsVectorPlot(self$results$plot5))
-        setDiagnosticState(
-          self$results$plot5, plots$plot5, 5L,
-          "Supports vs precision error", showNEP = self$options$NormEnt
-        )
-
-      if (self$options$plot6 && reestimationPlotsAvailable &&
-          needsVectorPlot(self$results$plot6))
-        setDiagnosticState(
-          self$results$plot6, plots$plot6, 6L,
-          "GCE re-estimation vs prediction error", showNEP = FALSE
-        )
-
-      if (self$options$plot7 && reestimationPlotsAvailable &&
-          needsVectorPlot(self$results$plot7))
-        setDiagnosticState(
-          self$results$plot7, plots$plot7, 7L,
-          "GCE re-estimation vs precision error", showNEP = FALSE
-        )
-
-      if (isTRUE(self$options$plotCV) && cvPlotAvailable &&
-          needsVectorPlot(self$results$plotCV))
-        self$results$plotCV$setState(.gceCVState(fit))
+      }
 
       ## Complete
       
