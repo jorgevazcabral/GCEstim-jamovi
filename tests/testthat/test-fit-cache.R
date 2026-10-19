@@ -56,6 +56,15 @@ for (kind in c("TARWGCE", "TASWGCE")) local({
       cv.lmgce = function(...) stop("Unexpected CV refit"),
       ridgetrace = function(...) stop("Unexpected ridge refit"),
       .package = "GCEstim")
+    table_names <- c("modelSummary", "signalSupports", "coefficients",
+                     "signalProbabilities", "cvResults")
+    retained <- lapply(table_names, function(name) first$results[[name]]$asDF)
+    # Loaded tables can survive option changes and .init(). Reusing them must
+    # preserve row counts and values rather than appending duplicate rows.
+    first$.__enclos_env__$private$.init()
+    first$run()
+    for (i in seq_along(table_names))
+      testthat::expect_equal(first$results[[table_names[i]]]$asDF, retained[[i]])
     for (enabled in c(FALSE, TRUE)) {
       replay <- cache_analysis(kind, data, list(
         plot1 = TRUE, plot2 = TRUE, plot3 = TRUE, plot4 = TRUE,

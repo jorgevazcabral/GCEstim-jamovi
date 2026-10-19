@@ -414,7 +414,7 @@ WGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `type`="number"),
                     list(
                         `name`="se", 
-                        `title`="Std. Deviation", 
+                        `title`="SE",
                         `type`="number", 
                         `visible`="(bootstrap == 0)"),
                     list(
@@ -431,7 +431,7 @@ WGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot1",
-                title="Estimates and confidence intervals",
+                title="Estimates and Confidence Intervals",
                 clearWith=list(
                     "data",
                     "run",
@@ -483,7 +483,7 @@ WGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Table$new(
                 options=options,
                 name="signalProbabilities",
-                title="Estimated signal support probabilities (p)",
+                title="Estimated Signal Support Probabilities (p)",
                 clearWith=list(
                     "data",
                     "run",

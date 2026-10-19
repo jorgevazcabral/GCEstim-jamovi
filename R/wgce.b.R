@@ -22,7 +22,7 @@ WGCEClass <- R6::R6Class(
       if (isTRUE(self$options$bootstrap)) {
         coefTable$setNote(
           key = "bootstrapColumns",
-          note = "Asymptotic Std. Deviation, z, and p are hidden when bootstrap intervals are selected.",
+          note = "Asymptotic SE, z, and p are hidden when bootstrap intervals are selected.",
           init = TRUE
         )
       }

@@ -126,9 +126,9 @@
   list(
     data = data,
     caption = sprintf(
-      "Estimates (%s %s%% CI)",
-      method,
-      100 * level
+      "Estimate (%s%% CI, %s)", 100 * level,
+      switch(method, z = "asymptotic", percentile = "bootstrap percentile",
+             basic = "bootstrap basic", method)
     )
   )
 }
@@ -138,6 +138,14 @@
   if (is.null(state) || is.null(state$data) || !nrow(state$data))
     return(FALSE)
   data <- state$data
+  # Older saved image states used an internal CI code in their caption.
+  # Translate it when rendering so reopening an .omv needs no model refit.
+  caption <- state$caption %||% 'Estimate'
+  methods <- c(z = "asymptotic", percentile = "bootstrap percentile",
+               basic = "bootstrap basic")
+  for (method in names(methods))
+    caption <- sub(paste0("^Estimates \\(", method, " ([0-9.]+)% CI\\)$"),
+                   paste0("Estimate (\\1% CI, ", methods[[method]], ")"), caption)
   data$term <- factor(data$term, levels = data$term)
   p <- ggplot2::ggplot(data, ggplot2::aes(x = estimate, y = term)) +
     ggplot2::geom_vline(xintercept = 0,
@@ -154,10 +162,9 @@
     ) +
     ggplot2::geom_point(ggplot2::aes(colour = term), size = 2) +
     ggplot2::labs(
-      x = 'Estimates',
+      x = caption,
       y = NULL,
-      colour = NULL,
-      title = state$caption
+      colour = NULL
     )
   if (any(is.finite(data$ols))) {
     p <- p + ggplot2::geom_point(
@@ -254,8 +261,7 @@
     ggplot2::labs(
       x = 'Log ridge penalty',
       y = 'Coefficients',
-      colour = NULL,
-      title = 'RIDGE TRACE'
+      colour = NULL
     )
   if (!is.null(state$extrema)) {
     p <- p + ggplot2::geom_point(
@@ -424,11 +430,7 @@
           "Estimates"
         else
           "Normalized Entropy",
-        colour = NULL,
-        title = state$title %||% if (which == 3L)
-          "Estimates vs supports"
-        else
-          "Normalized Entropy vs supports"
+        colour = NULL
       ) +
       ggplot2::scale_colour_manual(values = .gceTermColours(data$predictor, theme))
     
@@ -478,13 +480,7 @@
         y = state$yLabel %||% if (which %in% c(2L, 6L))
           "Prediction error"
         else
-          "Precision error",
-        title = state$title %||% c(
-          "Supports vs prediction error",
-          "Supports vs precision error",
-          "GCE re-estimation vs prediction error",
-          "GCE re-estimation vs precision error"
-        )[[match(which, c(2L, 5L, 6L, 7L))]]
+          "Precision error"
       )
     
     errorPoint <- selectedPoint(state$selectedError)

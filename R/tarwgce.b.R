@@ -20,7 +20,7 @@ TARWGCEClass <- R6::R6Class(
       if (isTRUE(self$options$bootstrap)) {
         coefTable$setNote(
           key = "bootstrapColumns",
-          note = "Asymptotic Std. Deviation, z, and p are hidden when bootstrap intervals are selected.",
+          note = "Asymptotic SE, z, and p are hidden when bootstrap intervals are selected.",
           init = TRUE
         )
       }
@@ -32,7 +32,7 @@ TARWGCEClass <- R6::R6Class(
         errorMeasure = "Prediction-error measure",
         errorMeasureWhich = "Selection rule",
         seed = "Seed",
-        method = "Method",
+        method = "Optimization method",
         supportMethod = "Support method",
         signalSupportSpecification = "Signal support specification",
         ridgeLambdaRange = "Ridge lambda range",
@@ -57,10 +57,12 @@ TARWGCEClass <- R6::R6Class(
       
       summaryTable <- self$results$modelSummary
       for (key in names(summaryRows)) {
-        summaryTable$addRow(
-          rowKey = key,
-          values = list(measure = summaryRows[[key]])
-        )
+        if (!(key %in% unlist(summaryTable$rowKeys))) {
+          summaryTable$addRow(
+            rowKey = key,
+            values = list(measure = summaryRows[[key]])
+          )
+        }
       }
       
       weightValues <- suppressWarnings(as.numeric(
@@ -421,7 +423,7 @@ TARWGCEClass <- R6::R6Class(
         "Signal Supports (%d equally spaced points)",
         as.integer(fit$support.signal.points.best)
       ))
-      for (i in seq_len(nrow(supportLimits))) {
+      if ((length(supportTable$rowKeys) == 0L || !supportTable$isFilled())) for (i in seq_len(nrow(supportLimits))) {
         supportTable$addRow(rowKey = as.character(i), values = list(
           term = rownames(supportLimits)[i],
           lower = as.numeric(supportLimits[i, 1]),
@@ -588,7 +590,7 @@ TARWGCEClass <- R6::R6Class(
       methodLabel <- sub("^primal\\.", "Primal: ", methodLabel)
       
       summaryTable$setRow(rowKey = "method", values = list(
-        measure = "Method",
+        measure = "Optimization method",
         value = methodLabel
       ))
       
@@ -778,7 +780,7 @@ TARWGCEClass <- R6::R6Class(
       coefs <- summ$coefficients
       coefTable <- self$results$coefficients
       
-      for (i in seq_len(nrow(coefs))) {
+      if ((length(coefTable$rowKeys) == 0L || !coefTable$isFilled())) for (i in seq_len(nrow(coefs))) {
         
         term <- rownames(coefs)[i]
         
@@ -800,12 +802,14 @@ TARWGCEClass <- R6::R6Class(
       
       if (!is.null(bestFit$p) &&
           nrow(pMatrix) == nrow(coefs) &&
-          ncol(pMatrix) > 0L) {
+          ncol(pMatrix) > 0L &&
+          (length(self$results$signalProbabilities$rowKeys) == 0L ||
+           !self$results$signalProbabilities$isFilled())) {
         
         pTable <- self$results$signalProbabilities
         pKeys <- paste0("p", seq_len(ncol(pMatrix)))
         
-        for (j in seq_len(ncol(pMatrix))) {
+        if (length(pTable$rowKeys) == 0L) for (j in seq_len(ncol(pMatrix))) {
           pTable$addColumn(
             name = pKeys[j],
             title = paste0("p_", j),

@@ -143,6 +143,22 @@ children:
         format: number
         width: large
   - type: CollapseBox
+    label: Cross-Validation
+    collapsed: true
+    children:
+      - type: TextBox
+        name: cvNfolds
+        label: CV folds
+        format: number
+      - type: ComboBox
+        name: errorMeasure
+      - type: ComboBox
+        name: errorMeasureWhich
+      - type: TextBox
+        name: cvTableRows
+        label: CV results to display
+        format: number
+  - type: CollapseBox
     label: Confidence Intervals
     collapsed: true
     children:
@@ -210,26 +226,10 @@ children:
             name: NormEnt
           - type: TextBox
             name: trueCoef
-            label: True coefficients for precision-error (comma separated)
+            label: True coefficients for precision-error plots (comma separated)
             format: string
             width: largest
             enable: (plot5 || plot7)
-  - type: CollapseBox
-    label: Cross-Validation
-    collapsed: true
-    children:
-      - type: TextBox
-        name: cvNfolds
-        label: CV folds
-        format: number
-      - type: ComboBox
-        name: errorMeasure
-      - type: ComboBox
-        name: errorMeasureWhich
-      - type: TextBox
-        name: cvTableRows
-        label: CV results to display
-        format: number
   - type: CollapseBox
     label: Save
     collapsed: true

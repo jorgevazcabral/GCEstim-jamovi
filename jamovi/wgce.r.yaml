@@ -118,7 +118,7 @@ items:
         title: Upper
         type: number
       - name: se
-        title: Std. Deviation
+        title: SE
         type: number
         visible: (bootstrap == 0)
       - name: z
@@ -132,7 +132,7 @@ items:
         visible: (bootstrap == 0)
 
   - name: plot1
-    title: Estimates and confidence intervals
+    title: Estimates and Confidence Intervals
     type: Image
     clearWith:
       - data
@@ -184,7 +184,7 @@ items:
     items: (J)
 
   - name: signalProbabilities
-    title: Estimated signal support probabilities (p)
+    title: Estimated Signal Support Probabilities (p)
     type: Table
     clearWith:
       - data

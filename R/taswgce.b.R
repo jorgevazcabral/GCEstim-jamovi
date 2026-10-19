@@ -20,7 +20,7 @@ TASWGCEClass <- R6::R6Class(
       if (isTRUE(self$options$bootstrap)) {
         coefTable$setNote(
           key = "bootstrapColumns",
-          note = "Asymptotic Std. Deviation, z, and p are hidden when bootstrap intervals are selected.",
+          note = "Asymptotic SE, z, and p are hidden when bootstrap intervals are selected.",
           init = TRUE
         )
       }
@@ -32,7 +32,7 @@ TASWGCEClass <- R6::R6Class(
         errorMeasure = "Prediction-error measure",
         errorMeasureWhich = "Selection rule",
         seed = "Seed",
-        method = "Method",
+        method = "Optimization method",
         supportMethod = "Support method",
         signalSupportSpecification = "Signal support specification",
         noiseSupportMethod = "Noise support specification",
@@ -566,7 +566,7 @@ TASWGCEClass <- R6::R6Class(
       methodLabel <- sub("^primal\\.", "Primal: ", methodLabel)
       
       summaryTable$setRow(rowKey = "method", values = list(
-        measure = "Method",
+        measure = "Optimization method",
         value = methodLabel
       ))
       

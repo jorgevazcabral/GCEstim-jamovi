@@ -257,7 +257,7 @@ items:
         type: number
       
       - name: se
-        title: Std. Deviation
+        title: SE
         type: number
         visible: (bootstrap == 0)
 
