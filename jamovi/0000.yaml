@@ -1,12 +1,12 @@
 ---
 title: Entropy-Based Linear Regression for jamovi
 name: GCEstimjmv
-version: 1.0.3
+version: 1.0.4
 jms: '1.0'
 authors:
   - Jorge Cabral
 maintainer: Jorge Cabral <jorgecabral@ua.pt>
-date: '2026-10-19'
+date: '2026-10-20'
 type: R
 description: >-
   A jamovi interface for generalized maximum-entropy and generalized

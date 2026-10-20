@@ -273,6 +273,7 @@ WGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "WGCEResults",
     inherit = jmvcore::Group,
     active = list(
+        fitCache = function() private$.items[["fitCache"]],
         text = function() private$.items[["text"]],
         modelSummary = function() private$.items[["modelSummary"]],
         signalSupports = function() private$.items[["signalSupports"]],
@@ -291,6 +292,42 @@ WGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 title="W-GCE Linear Model",
                 refs=list(
                     "GCEstim"))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="fitCache",
+                title="Fitted model cache",
+                visible=FALSE,
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "supportSignalLowers",
+                    "supportSignalUppers",
+                    "M",
+                    "J",
+                    "weight",
+                    "uniformSignalPrior",
+                    "signalPriorWeights",
+                    "uniformNoisePrior",
+                    "noisePriorWeights",
+                    "supportNoise3sig",
+                    "supportNoiseMin",
+                    "supportNoiseMax",
+                    "method",
+                    "bootConfLevel",
+                    "bootstrap",
+                    "bootB",
+                    "bootMethod",
+                    "bootCIMethod",
+                    "seed"),
+                columns=list(
+                    list(
+                        `name`="value",
+                        `title`="Value",
+                        `type`="text"))))
             self$add(jmvcore::Html$new(
                 options=options,
                 name="text",
@@ -311,6 +348,10 @@ WGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "M",
                     "J",
                     "weight",
+                    "uniformSignalPrior",
+                    "signalPriorWeights",
+                    "uniformNoisePrior",
+                    "noisePriorWeights",
                     "supportNoise3sig",
                     "supportNoiseMin",
                     "supportNoiseMax",
@@ -346,6 +387,10 @@ WGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "M",
                     "J",
                     "weight",
+                    "uniformSignalPrior",
+                    "signalPriorWeights",
+                    "uniformNoisePrior",
+                    "noisePriorWeights",
                     "supportNoise3sig",
                     "supportNoiseMin",
                     "supportNoiseMax",
@@ -385,6 +430,10 @@ WGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "M",
                     "J",
                     "weight",
+                    "uniformSignalPrior",
+                    "signalPriorWeights",
+                    "uniformNoisePrior",
+                    "noisePriorWeights",
                     "supportNoise3sig",
                     "supportNoiseMin",
                     "supportNoiseMax",
@@ -444,6 +493,10 @@ WGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "M",
                     "J",
                     "weight",
+                    "uniformSignalPrior",
+                    "signalPriorWeights",
+                    "uniformNoisePrior",
+                    "noisePriorWeights",
                     "supportNoise3sig",
                     "supportNoiseMin",
                     "supportNoiseMax",
@@ -496,6 +549,10 @@ WGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "M",
                     "J",
                     "weight",
+                    "uniformSignalPrior",
+                    "signalPriorWeights",
+                    "uniformNoisePrior",
+                    "noisePriorWeights",
                     "supportNoise3sig",
                     "supportNoiseMin",
                     "supportNoiseMax",
@@ -565,6 +622,7 @@ WGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param plot1 .
 #' @return A results object containing:
 #' \tabular{llllll}{
+#'   \code{results$fitCache} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$modelSummary} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$signalSupports} \tab \tab \tab \tab \tab a table \cr
@@ -578,9 +636,9 @@ WGCEBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
 #'
-#' \code{results$modelSummary$asDF}
+#' \code{results$fitCache$asDF}
 #'
-#' \code{as.data.frame(results$modelSummary)}
+#' \code{as.data.frame(results$fitCache)}
 #'
 #' @export
 WGCE <- function(

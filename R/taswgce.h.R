@@ -417,8 +417,7 @@ TASWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "bootB",
                     "bootMethod",
                     "bootCIMethod",
-                    "bootConfLevel",
-                    "trueCoef")))
+                    "bootConfLevel")))
             self$add(jmvcore::Html$new(
                 options=options,
                 name="text",

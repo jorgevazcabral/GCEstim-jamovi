@@ -12,7 +12,7 @@ The adaptive analyses use `GCEstim::cv.lmgce()`; W-GCE uses `GCEstim::lmgce()`. 
 
 ## Install on Windows
 
-1. Download [`GCEstimjmv_1.0.3.jmo`](https://github.com/jorgevazcabral/GCEstim-jamovi/releases/download/v1.0.3/GCEstimjmv_1.0.3.jmo) from the [v1.0.3 release](https://github.com/jorgevazcabral/GCEstim-jamovi/releases/tag/v1.0.3). This Windows x64 build was built and tested with jamovi 2.7.33.0.
+1. Download [`GCEstimjmv_1.0.4.jmo`](https://github.com/jorgevazcabral/GCEstim-jamovi/releases/download/v1.0.4/GCEstimjmv_1.0.4.jmo) from the [v1.0.4 release](https://github.com/jorgevazcabral/GCEstim-jamovi/releases/tag/v1.0.4). This Windows x64 build was built and tested with jamovi 2.7.33.0.
 2. In jamovi, select **Modules (+) → Side-load**.
 3. **Click the upload icon**, then choose the `.jmo` file in the file picker. Dragging the file into the jamovi window may attempt to open it as a data file instead.
 4. Find **GCEstim** in the Analyses ribbon.

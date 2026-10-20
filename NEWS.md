@@ -1,3 +1,26 @@
+# GCEstimjmv 1.0.4
+
+- Cache W-GCE's compact results and confidence intervals, including bootstrap
+  intervals and OLS comparison data. Plot and OLS toggles reuse the fit, and
+  saved columns and reopened analyses can be reconstructed from plain state.
+- Standardize Model Summary CI types as Asymptotic normal, signal probability
+  headings as p (point 1), p (point 2), etc., and adaptive support-point hints.
+- Validate true coefficients only for selected, available precision-error plots.
+  Invalid optional input produces a warning and skips those plots while retaining
+  tables and other plots, including after factor or intercept changes.
+- Store adaptive fit caches as inspectable lists (format v4), without nested
+  serialization, gzip packing, or duplicate copies of ordinary image data.
+  Older cache formats refit once; current caches replay saved outputs without
+  refitting. Precision plots use compact coefficient data so changing true
+  coefficients or plot options never requires cross-validation.
+- Invalidate W-GCE model results when signal or noise prior options change.
+
+Validation: 789 automated assertions passed, including compact cache serialization,
+replay, bootstrap reuse, saved-output alignment, optional precision input, and
+result dependencies. Windows x64 build for jamovi 2.7.33.0.
+
+Release asset: `GCEstimjmv_1.0.4.jmo`.
+
 # GCEstimjmv 1.0.3
 
 - TARW-GCE and TASW-GCE now cache compact results and plot data so fitted

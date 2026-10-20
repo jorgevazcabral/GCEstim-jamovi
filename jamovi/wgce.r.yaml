@@ -6,6 +6,41 @@ refs:
   - GCEstim
 
 items:
+  - name: fitCache
+    title: Fitted model cache
+    type: Table
+    visible: false
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - supportSignalLowers
+      - supportSignalUppers
+      - M
+      - J
+      - weight
+      - uniformSignalPrior
+      - signalPriorWeights
+      - uniformNoisePrior
+      - noisePriorWeights
+      - supportNoise3sig
+      - supportNoiseMin
+      - supportNoiseMax
+      - method
+      - bootConfLevel
+      - bootstrap
+      - bootB
+      - bootMethod
+      - bootCIMethod
+      - seed
+    columns:
+      - name: value
+        title: Value
+        type: text
+
   - name: text
     title: Status
     type: Html
@@ -25,6 +60,10 @@ items:
       - M
       - J
       - weight
+      - uniformSignalPrior
+      - signalPriorWeights
+      - uniformNoisePrior
+      - noisePriorWeights
       - supportNoise3sig
       - supportNoiseMin
       - supportNoiseMax
@@ -58,6 +97,10 @@ items:
       - M
       - J
       - weight
+      - uniformSignalPrior
+      - signalPriorWeights
+      - uniformNoisePrior
+      - noisePriorWeights
       - supportNoise3sig
       - supportNoiseMin
       - supportNoiseMax
@@ -94,6 +137,10 @@ items:
       - M
       - J
       - weight
+      - uniformSignalPrior
+      - signalPriorWeights
+      - uniformNoisePrior
+      - noisePriorWeights
       - supportNoise3sig
       - supportNoiseMin
       - supportNoiseMax
@@ -146,6 +193,10 @@ items:
       - M
       - J
       - weight
+      - uniformSignalPrior
+      - signalPriorWeights
+      - uniformNoisePrior
+      - noisePriorWeights
       - supportNoise3sig
       - supportNoiseMin
       - supportNoiseMax
@@ -198,6 +249,10 @@ items:
       - M
       - J
       - weight
+      - uniformSignalPrior
+      - signalPriorWeights
+      - uniformNoisePrior
+      - noisePriorWeights
       - supportNoise3sig
       - supportNoiseMin
       - supportNoiseMax

@@ -1,23 +1,76 @@
 # Plot states contain plain data; fitted models and ggplot environments stay out of images.
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
-.gcePackFitCache <- function(fit, ci, coefficients, plots) {
-  bytes <- serialize(list(version = 3L, fit = fit, ci = ci,
-                          coefficients = coefficients, plots = plots), NULL)
-  as.integer(memCompress(bytes, type = "gzip"))
+# Validate optional plot input without rejecting the fitted analysis.
+.gceTrueCoefficients <- function(text, form, data) {
+  tryCatch({
+    text <- trimws(text)
+    if (!nzchar(text))
+      stop("The precision-error plots require a vector of true coefficients.")
+    parts <- trimws(strsplit(paste0(text, ",END"), ",", fixed = TRUE)[[1L]])
+    values <- suppressWarnings(as.numeric(head(parts, -1L)))
+    if (!length(values) || any(!is.finite(values)))
+      stop("True coefficients must be finite numeric values separated by commas.")
+    expected <- ncol(stats::model.matrix(form, data))
+    if (length(values) != expected)
+      stop(sprintf("The true coefficient vector must contain %d values for the current model (including the intercept when selected).", expected))
+    list(values = values, warning = NULL)
+  }, error = function(e) list(values = NULL,
+    warning = paste0("Precision-error plots skipped: ", conditionMessage(e))))
 }
 
-.gceUnpackFitCache <- function(payload) {
-  if (is.null(payload))
-    return(NULL)
-  
-  tryCatch(
-    unserialize(memDecompress(
-      as.raw(as.integer(unlist(payload, use.names = FALSE))),
-      type = "gzip"
-    )),
-    error = function(e) NULL
-  )
+# Only coefficient vectors and plotting metadata are retained, never a model.
+# Reconstitute the small interface used by GCEstim's precision plot method on
+# demand; changing true coefficients then requires no estimation or CV.
+.gcePrecisionBasis <- function(best) {
+  fields <- c("coefficients", "error", "support.ok", "support.stdUL",
+              "support.signal.min", "support.signal.1se", "support.signal.elbow",
+              "support.signal.manual", "nep")
+  basis <- lapply(fields, function(key) best[[key]])
+  names(basis) <- fields
+  sr <- best$results$nocv$support.results
+  candidates <- lapply(sr[as.character(best$support.ok)], function(x)
+    list(coefficients = as.numeric(x$coefficients)))
+  # These three summary entries are expected by plot.lmgce(which = 5).
+  if (length(sr) == 1L)
+    candidates <- list(list(coefficients = as.numeric(sr[[1L]]$coefficients)))
+  for (key in if (length(sr) > 1L) tail(names(sr), 3L) else character())
+    candidates[[key]] <- sr[[key]]
+  basis$results <- list(
+    nocv = list(support.results = candidates),
+    twosteps = lapply(best$results$twosteps, function(x)
+      list(coefficients = as.numeric(x$coefficients))),
+    OLS = list(error = as.numeric(best$results$OLS$error),
+               matrix.coef = best$results$OLS$matrix.coef))
+  basis
+}
+
+.gcePrecisionState <- function(basis, which, trueCoef) {
+  p <- plot(structure(basis, class = "lmgce"), which = which,
+            coef = trueCoef, OLS = TRUE, NormEnt = TRUE)
+  if (is.list(p) && !inherits(p, "ggplot")) p <- p[[1L]]
+  .gceDiagnosticState(p, which,
+    supportLines = if (which == 5L) .gceSupportLines(basis) else NULL,
+    selectedSupport = if (which == 5L) basis$support.stdUL else NULL,
+    selectedNEP = if (which == 5L) basis$nep else NULL)
+}
+
+# Image states hold a reference and presentation settings, not a second copy of
+# cached data. Legacy self-contained image states can still render on reopening.
+.gcePlotImage <- function(image, cache) {
+  state <- image$state
+  if (is.null(state$key)) return(image)
+  presentation <- state
+  state <- cache$plots[[presentation$key]]
+  if (is.null(state)) return(list(state = NULL))
+  if (!isTRUE(presentation$OLS)) {
+    if (presentation$key == "plot1") state$data$ols <- NA_real_
+    if (presentation$key == "plot3") state$ols <- NULL
+    state$overlays <- Filter(function(x) !"yintercept" %in% names(x), state$overlays)
+  }
+  if (presentation$key %in% c("plot2", "plot5"))
+    state$showNEP <- isTRUE(presentation$NormEnt)
+  list(state = state)
 }
 
 .gceCompactCVFit <- function(fit) {
@@ -37,7 +90,7 @@
 
 # Generate all available plot data while the selected GCEstim model exists.
 # The returned states contain data frames and atomic values only.
-.gceCachePlotStates <- function(fit, ci, level, method, trueCoef,
+.gceCachePlotStates <- function(fit, ci, level, method,
                                 supportGridAvailable,
                                 reestimationPlotsAvailable,
                                 cvPlotAvailable) {
@@ -54,22 +107,15 @@
                                         .gceCVState(fit)) else NULL
   )
   ols <- safely("OLS comparison", .gceOLSState(best))
-  for (which in 2L:7L) {
+  for (which in c(2L, 3L, 4L, 6L)) {
     if ((which %in% 2L:5L && !supportGridAvailable) ||
-        (which %in% 6L:7L && !reestimationPlotsAvailable) ||
-        (which %in% c(5L, 7L) && is.null(trueCoef)))
+        (which %in% 6L:7L && !reestimationPlotsAvailable))
       next
     key <- paste0("plot", which)
     states[[key]] <- safely(key, {
       plotFit <- best
-      if (which == 5L) {
-        # GCEstim's precision plot uses every support fit, but its x values
-        # include only successful supports. Align them if a candidate failed.
-        sr <- best$results$nocv$support.results
-        plotFit$results$nocv$support.results <-
-          sr[c(as.character(best$support.ok), tail(names(sr), 3L))]
-      }
-      p <- plot(plotFit, which = which, coef = trueCoef,
+
+      p <- plot(plotFit, which = which, coef = NULL,
                 OLS = TRUE, NormEnt = TRUE)
       if (is.list(p) && !inherits(p, "ggplot")) p <- p[[1L]]
       .gceDiagnosticState(

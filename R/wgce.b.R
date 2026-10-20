@@ -28,9 +28,13 @@ WGCEClass <- R6::R6Class(
       }
       
       for (j in seq_len(self$options$M)) {
+        if (paste0("p", j) %in% names(pTable$columns)) {
+          pTable$getColumn(paste0("p", j))$setTitle(paste0("p (point ", j, ")"))
+          next
+        }
         pTable$addColumn(
           name = paste0("p", j),
-          title = paste0("p_", j),
+          title = paste0("p (point ", j, ")"),
           type = "number",
           format = "zto"
         )
@@ -61,6 +65,7 @@ WGCEClass <- R6::R6Class(
       
       summaryTable <- self$results$modelSummary
       for (key in names(summaryRows)) {
+        if (key %in% unlist(summaryTable$rowKeys)) next
         summaryTable$addRow(
           rowKey = key,
           values = list(measure = summaryRows[[key]])
@@ -241,7 +246,7 @@ WGCEClass <- R6::R6Class(
       }
 
       supportTable <- self$results$signalSupports
-      for (i in seq_len(k)) {
+      if (length(supportTable$rowKeys) == 0L || !supportTable$isFilled()) for (i in seq_len(k)) {
         supportTable$addRow(rowKey = as.character(i), values = list(
           term = coefNames[i], lower = lower[i], upper = upper[i]
         ))
@@ -258,43 +263,56 @@ WGCEClass <- R6::R6Class(
 
       bootB <- if (self$options$bootstrap) self$options$bootB else 0L
 
-      self$results$text$setContent("<p>Estimating W-GCE model...</p>")
+      cached <- self$results$fitCache$state
+      useCachedFit <- is.list(cached) && identical(cached$version, 4L) &&
+        is.list(cached$fit) && is.matrix(cached$coefficients) &&
+        is.matrix(cached$ci) && is.list(cached$plots)
+      self$results$text$setContent(if (useCachedFit)
+        "<p>Updating results from the fitted model...</p>" else
+        "<p>Estimating W-GCE model...</p>")
       private$.checkpoint()
       startTime <- Sys.time()
       warnings <- character()
 
-      fit <- tryCatch(
-        withCallingHandlers(
-          GCEstim::lmgce(
-            formula = form,
-            data = data,
-            cv = FALSE,
-            errormeasure.which = "min",
-            support.method = "standardized",
-            support.signal = supportSignal,
-            support.signal.points = signalPrior,
-            support.noise = supportNoise,
-            support.noise.points = noisePrior,
-            weight = self$options$weight,
-            twosteps.n = 0L,
-            method = self$options$method,
-            caseGLM = "D",
-            boot.B = bootB,
-            boot.method = self$options$bootMethod,
-            seed = self$options$seed,
-            OLS = TRUE
+      captureWarning <- function(w) {
+        warnings <<- c(warnings, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      }
+      if (useCachedFit) {
+        fit <- cached$fit
+        warnings <- cached$warnings %||% character()
+      } else {
+        fit <- tryCatch(
+          withCallingHandlers(
+            GCEstim::lmgce(
+              formula = form,
+              data = data,
+              cv = FALSE,
+              errormeasure.which = "min",
+              support.method = "standardized",
+              support.signal = supportSignal,
+              support.signal.points = signalPrior,
+              support.noise = supportNoise,
+              support.noise.points = noisePrior,
+              weight = self$options$weight,
+              twosteps.n = 0L,
+              method = self$options$method,
+              caseGLM = "D",
+              boot.B = bootB,
+              boot.method = self$options$bootMethod,
+              seed = self$options$seed,
+              OLS = TRUE
+            ),
+            warning = captureWarning
           ),
-          warning = function(w) {
-            warnings <<- c(warnings, conditionMessage(w))
-            invokeRestart("muffleWarning")
-          }
-        ),
-        error = function(e) e
-      )
+          error = function(e) e
+        )
 
-      if (inherits(fit, "error")) {
-        jmvcore::reject("Model estimation failed: {message}", code = "fit_failed",
-                        message = conditionMessage(fit))
+        if (inherits(fit, "error")) {
+          jmvcore::reject("Model estimation failed: {message}", code = "fit_failed",
+                          message = conditionMessage(fit))
+        }
+
       }
 
       if (self$options$saveFitted &&
@@ -329,7 +347,7 @@ WGCEClass <- R6::R6Class(
         }
       }
 
-      elapsed <- as.numeric(difftime(Sys.time(), startTime,
+      elapsed <- if (useCachedFit) cached$fitElapsed else as.numeric(difftime(Sys.time(), startTime,
                                      units = "secs"))
       timeText <- if (elapsed < 60) {
         paste0(round(elapsed, 3), " s")
@@ -341,24 +359,45 @@ WGCEClass <- R6::R6Class(
       self$results$text$setContent("<p>Fit completed. Computing confidence intervals...</p>")
       private$.checkpoint()
 
-      ci <- tryCatch(
-        if (self$options$bootstrap) {
-          stats::confint(fit, level = self$options$bootConfLevel,
-                         method = self$options$bootCIMethod)
-        } else {
-          stats::confint(fit, level = self$options$bootConfLevel)
-        },
-        error = function(e) e
-      )
-      if (inherits(ci, "error")) {
-        jmvcore::reject("Confidence intervals: {message}", code = "ci_failed",
-                        message = conditionMessage(ci))
-      }
+      if (useCachedFit) {
+        ci <- cached$ci
+        summ <- list(coefficients = cached$coefficients)
+        plotState <- cached$plots$plot1
+      } else {
+        ci <- tryCatch(
+          withCallingHandlers(
+          if (self$options$bootstrap) {
+            stats::confint(fit, level = self$options$bootConfLevel,
+                           method = self$options$bootCIMethod)
+          } else {
+            stats::confint(fit, level = self$options$bootConfLevel)
+          },
+          warning = captureWarning),
+          error = function(e) e
+        )
+        if (inherits(ci, "error")) {
+          jmvcore::reject("Confidence intervals: {message}", code = "ci_failed",
+                          message = conditionMessage(ci))
+        }
 
-      summ <- tryCatch(summary(fit), error = function(e) e)
-      if (inherits(summ, "error")) {
-        jmvcore::reject("Model summary: {message}", code = "summary_failed",
-                        message = conditionMessage(summ))
+        summ <- tryCatch(withCallingHandlers(summary(fit), warning = captureWarning),
+                         error = function(e) e)
+        if (inherits(summ, "error")) {
+          jmvcore::reject("Model summary: {message}", code = "summary_failed",
+                          message = conditionMessage(summ))
+        }
+
+        plotState <- tryCatch(withCallingHandlers(.gceEstimateState(
+          fit, ci, self$options$bootConfLevel,
+          if (self$options$bootstrap) self$options$bootCIMethod else "z",
+          includeOLS = TRUE), warning = captureWarning), error = function(e) {
+            warnings <<- c(warnings, paste0("Estimates and confidence intervals: ", conditionMessage(e)))
+            NULL
+          })
+        # Retain only the vectors/matrices consumed below and by saved outputs.
+        fit <- list(p = as.matrix(fit$p), w = as.matrix(fit$w),
+                    fitted.values = as.numeric(fit$fitted.values),
+                    residuals = as.numeric(fit$residuals))
       }
 
       self$results$text$setContent("<p>Confidence intervals completed. Filling tables...</p>")
@@ -441,7 +480,7 @@ WGCEClass <- R6::R6Class(
 
       coefs <- summ$coefficients
       coefTable <- self$results$coefficients
-      for (i in seq_len(nrow(coefs))) {
+      if (length(coefTable$rowKeys) == 0L || !coefTable$isFilled()) for (i in seq_len(nrow(coefs))) {
         term <- rownames(coefs)[i]
         coefTable$addRow(rowKey = term, values = list(
           term = term,
@@ -465,7 +504,7 @@ WGCEClass <- R6::R6Class(
         
         pTerms <- rownames(pMatrix)
         if (is.null(pTerms)) pTerms <- coefNames
-        for (i in seq_len(nrow(pMatrix))) {
+        if (length(pTable$rowKeys) == 0L || !pTable$isFilled()) for (i in seq_len(nrow(pMatrix))) {
           values <- c(
             list(term = pTerms[i]),
             stats::setNames(as.list(as.numeric(pMatrix[i, ])), pKeys)
@@ -474,13 +513,16 @@ WGCEClass <- R6::R6Class(
         }
       }
 
-      if (self$options$plot1) {
-        self$results$plot1$setState(.gceEstimateState(
-          fit, ci, self$options$bootConfLevel,
-          if (self$options$bootstrap) self$options$bootCIMethod else 'z',
-          includeOLS = self$options$OLS
+      if (!useCachedFit) {
+        self$results$fitCache$setState(list(
+          version = 4L, fit = fit, ci = as.matrix(ci),
+          coefficients = as.matrix(summ$coefficients),
+          plots = list(plot1 = plotState), warnings = unique(warnings),
+          fitElapsed = elapsed
         ))
       }
+      if (self$options$plot1)
+        self$results$plot1$setState(list(key = "plot1", OLS = isTRUE(self$options$OLS)))
 
       if (length(warnings)) {
         warningNotice <- jmvcore::Notice$new(
@@ -497,7 +539,9 @@ WGCEClass <- R6::R6Class(
         name = ".fitTime",
         type = jmvcore::NoticeType$INFO
       )
-      timeNotice$setContent(paste0("Computation time: ", timeText))
+      timeNotice$setContent(if (useCachedFit)
+        paste0("Previous fit reused (original fit time: ", timeText, ").") else
+        paste0("Computation time: ", timeText))
       self$results$insert(1, timeNotice)
       
       self$results$text$setVisible(FALSE)
@@ -505,6 +549,6 @@ WGCEClass <- R6::R6Class(
     },
 
     .plot1 = function(image, ggtheme, theme)
-      .gceRenderEstimates(image, ggtheme, theme)
+      .gceRenderEstimates(.gcePlotImage(image, self$results$fitCache$state), ggtheme, theme)
   )
 )

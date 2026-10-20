@@ -27,6 +27,8 @@ expect_successful_fit <- function(results, adaptive = FALSE) {
 
   summary <- expect_filled_table(results, "modelSummary", c("measure", "value"))
   testthat::expect_true(any(nzchar(as.character(summary$value))))
+  testthat::expect_identical(as.character(summary$value[summary$measure == "Confidence interval type"]),
+                             "Asymptotic normal")
   supports <- expect_filled_table(results, "signalSupports", c("term", "lower", "upper"))
   testthat::expect_true(any(is.finite(supports$lower) & is.finite(supports$upper)))
 
@@ -41,6 +43,9 @@ expect_successful_fit <- function(results, adaptive = FALSE) {
   probabilities <- expect_filled_table(results, "signalProbabilities", "term")
   p_columns <- grep("^p[0-9]+$", names(probabilities), value = TRUE)
   testthat::expect_gt(length(p_columns), 0L)
+  for (j in seq_along(p_columns))
+    testthat::expect_identical(results$signalProbabilities$getColumn(p_columns[j])$title,
+                               paste0("p (point ", j, ")"))
   testthat::expect_true(any(is.finite(as.numeric(probabilities[[p_columns[1L]]]))))
 
   if (adaptive) {

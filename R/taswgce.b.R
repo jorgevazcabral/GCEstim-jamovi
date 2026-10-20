@@ -158,9 +158,8 @@ TASWGCEClass <- R6::R6Class(
         isTRUE(self$options$plot7) && reestimationPlotsAvailable
       )
 
-      needsTrueCoef <- isTRUE(self$options$plot5) ||
-        isTRUE(self$options$plot7) ||
-        isTRUE(nzchar(trimws(as.character(self$options$trueCoef))))
+      needsTrueCoef <- (isTRUE(self$options$plot5) && supportGridAvailable) ||
+        (isTRUE(self$options$plot7) && reestimationPlotsAvailable)
       
       trueCoef <- NULL
       
@@ -213,35 +212,13 @@ TASWGCEClass <- R6::R6Class(
       
       form <- stats::as.formula(formStr)
       
+      precisionWarning <- NULL
       if (needsTrueCoef) {
-        
-        trueCoefText <- trimws(self$options$trueCoef)
-        
-        if (trueCoefText == "") {
-          jmvcore::reject(
-            "The precision-error plots require a vector of true coefficients.",
-            code = "true_coef_required"
-          )
-        }
-        
-        trueCoef <- suppressWarnings(
-          as.numeric(strsplit(trueCoefText, ",")[[1]])
-        )
-        
-        if (any(is.na(trueCoef))) {
-          jmvcore::reject("True coefficients must be numeric and separated by commas.", code = "invalid_true_coef")
-        }
-        
-        X <- stats::model.matrix(form, data)
-        
-        expectedCoef <- ncol(X)
-        
-        if (length(trueCoef) != expectedCoef) {
-          jmvcore::reject("The true coefficient vector must contain {n} values (including the intercept).",
-            code = "true_coef_length", n = expectedCoef)
-        }
+        validated <- .gceTrueCoefficients(self$options$trueCoef, form, data)
+        trueCoef <- validated$values
+        precisionWarning <- validated$warning
       }
-      
+
       if (self$options$supportSignalVectorMin >= self$options$supportSignalVectorMax) {
         jmvcore::reject("The minimum flexibility parameter must be smaller than the maximum.", code = "invalid_signal_range")
       }
@@ -301,11 +278,10 @@ TASWGCEClass <- R6::R6Class(
       }
       
       fitCache <- self$results$fitCache$state
-      cached <- if (is.list(fitCache))
-        .gceUnpackFitCache(fitCache$payload) else NULL
+      cached <- fitCache
       
       useCachedFit <- is.list(cached) &&
-        identical(cached$version, 3L) &&
+        identical(cached$version, 4L) &&
         is.list(cached$fit$best) &&
         is.matrix(cached$coefficients) &&
         !is.null(cached$ci)
@@ -628,7 +604,7 @@ TASWGCEClass <- R6::R6Class(
             basic = "Bootstrap basic"
           )[[self$options$bootCIMethod]]
         } else {
-          "Asymptotic (z)"
+          "Asymptotic normal"
         }
       ))
       
@@ -723,6 +699,9 @@ TASWGCEClass <- R6::R6Class(
         )
       }
       
+      for (key in grep("^p[0-9]+$", names(self$results$signalProbabilities$columns), value = TRUE))
+        self$results$signalProbabilities$getColumn(key)$setTitle(
+          paste0("p (point ", substring(key, 2L), ")"))
       pMatrix <- as.matrix(bestFit$p)
       
       if (!is.null(bestFit$p) &&
@@ -737,7 +716,7 @@ TASWGCEClass <- R6::R6Class(
         if (length(pTable$rowKeys) == 0L) for (j in seq_len(ncol(pMatrix))) {
           pTable$addColumn(
             name = pKeys[j],
-            title = paste0("p_", j),
+            title = paste0("p (point ", j, ")"),
             type = "number",
             format = "zto"
           )
@@ -766,44 +745,52 @@ TASWGCEClass <- R6::R6Class(
       
       if (useCachedFit) {
         plotStates <- cached$plots
+        precisionBasis <- cached$precisionBasis
         plotWarnings <- fitCache$plotWarnings %||% character()
       } else {
         prepared <- .gceCachePlotStates(
           fit, ci, self$options$bootConfLevel,
           if (self$options$bootstrap) self$options$bootCIMethod else "z",
-          trueCoef, supportGridAvailable, reestimationPlotsAvailable,
+          supportGridAvailable, reestimationPlotsAvailable,
           cvPlotAvailable
         )
         plotStates <- prepared$states
+        precisionBasis <- .gcePrecisionBasis(bestFit)
         plotWarnings <- prepared$warnings
       }
 
-      # Presentation choices change image state, never the fitted result.
-      selectedPlots <- c("plot1", paste0("plot", 2:7), "plotCV")
-      for (key in selectedPlots) {
-        if (!isTRUE(self$options[[key]]) || is.null(plotStates[[key]]))
-          next
-        result <- self$results[[key]]
-        current <- result$state
-        if (!is.null(current) && !is.null(current$data))
-          next
-        state <- plotStates[[key]]
-        if (key == "plot1" && !isTRUE(self$options$OLS))
-          state$data$ols <- NA_real_
-        if (key == "plot3" && !isTRUE(self$options$OLS))
-          state$ols <- NULL
-        if (!isTRUE(self$options$OLS))
-          state$overlays <- Filter(function(x) !"yintercept" %in% names(x),
-                                   state$overlays)
-        if (key %in% c("plot2", "plot5"))
-          state$showNEP <- isTRUE(self$options$NormEnt)
-        result$setState(state)
+      # Canonical plot data lives once in fitCache. Images retain references.
+      for (key in c("plot1", "plot2", "plot3", "plot4", "plot6", "plotCV")) {
+        if (isTRUE(self$options[[key]]) && !is.null(plotStates[[key]]))
+          self$results[[key]]$setState(list(key = key,
+            OLS = isTRUE(self$options$OLS), NormEnt = isTRUE(self$options$NormEnt)))
+      }
+      for (which in c(5L, 7L)) {
+        key <- paste0("plot", which)
+        available <- if (which == 5L) supportGridAvailable else reestimationPlotsAvailable
+        if (!isTRUE(self$options[[key]]) || !available) next
+        state <- NULL
+        if (!is.null(trueCoef)) {
+          state <- tryCatch(.gcePrecisionState(precisionBasis, which, trueCoef),
+            error = function(e) {
+              precisionWarning <<- paste0("Precision-error plot skipped: ", conditionMessage(e))
+              NULL
+            })
+          if (!is.null(state)) {
+            if (!isTRUE(self$options$OLS))
+              state$overlays <- Filter(function(x) !"yintercept" %in% names(x), state$overlays)
+            state$showNEP <- isTRUE(self$options$NormEnt)
+          }
+        }
+        self$results[[key]]$setState(state)
       }
 
       if (!useCachedFit) {
         self$results$fitCache$setState(list(
-          payload = .gcePackFitCache(compactFit, ci,
-                                     as.matrix(summ$coefficients), plotStates),
+          version = 4L,
+          fit = compactFit, ci = ci,
+          coefficients = as.matrix(summ$coefficients),
+          plots = plotStates, precisionBasis = precisionBasis,
           warningMsg = fitWarningMsg,
           plotWarnings = plotWarnings,
           fitElapsed = fitElapsed
@@ -812,7 +799,7 @@ TASWGCEClass <- R6::R6Class(
 
       ## Complete
       
-      warningMessages <- plotWarnings
+      warningMessages <- c(plotWarnings, precisionWarning)
       
       if (!is.null(warningMsg) && nzchar(warningMsg))
         warningMessages <- c(warningMsg, warningMessages)
@@ -846,20 +833,20 @@ TASWGCEClass <- R6::R6Class(
     },
     
     .plot1 = function(image, ggtheme, theme)
-      .gceRenderEstimates(image, ggtheme, theme),
+      .gceRenderEstimates(.gcePlotImage(image, self$results$fitCache$state), ggtheme, theme),
     .plot2 = function(image, ggtheme, theme)
-      .gceRenderDiagnostic(image, ggtheme, theme),
+      .gceRenderDiagnostic(.gcePlotImage(image, self$results$fitCache$state), ggtheme, theme),
     .plot3 = function(image, ggtheme, theme)
-      .gceRenderDiagnostic(image, ggtheme, theme),
+      .gceRenderDiagnostic(.gcePlotImage(image, self$results$fitCache$state), ggtheme, theme),
     .plot4 = function(image, ggtheme, theme)
-      .gceRenderDiagnostic(image, ggtheme, theme),
+      .gceRenderDiagnostic(.gcePlotImage(image, self$results$fitCache$state), ggtheme, theme),
     .plot5 = function(image, ggtheme, theme)
-      .gceRenderDiagnostic(image, ggtheme, theme),
+      .gceRenderDiagnostic(.gcePlotImage(image, self$results$fitCache$state), ggtheme, theme),
     .plot6 = function(image, ggtheme, theme)
-      .gceRenderDiagnostic(image, ggtheme, theme),
+      .gceRenderDiagnostic(.gcePlotImage(image, self$results$fitCache$state), ggtheme, theme),
     .plot7 = function(image, ggtheme, theme)
-      .gceRenderDiagnostic(image, ggtheme, theme),
+      .gceRenderDiagnostic(.gcePlotImage(image, self$results$fitCache$state), ggtheme, theme),
     .plotCV = function(image, ggtheme, theme)
-      .gceRenderCV(image, ggtheme, theme)
+      .gceRenderCV(.gcePlotImage(image, self$results$fitCache$state), ggtheme, theme)
   )
 )
