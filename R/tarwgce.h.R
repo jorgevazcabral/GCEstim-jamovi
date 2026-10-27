@@ -749,7 +749,7 @@ TARWGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `type`="number"),
                     list(
                         `name`="se", 
-                        `title`="SE",
+                        `title`="SE", 
                         `type`="number", 
                         `visible`="(bootstrap == 0)"),
                     list(

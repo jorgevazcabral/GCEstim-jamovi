@@ -59,10 +59,18 @@
 # cached data. Legacy self-contained image states can still render on reopening.
 .gcePlotImage <- function(image, cache) {
   state <- image$state
-  if (is.null(state$key)) return(image)
+  if (is.null(state$key)) {
+    if (identical(state$which, 4L))
+      return(list(state = .gceEntropyState(state, cache$plots$plot3)))
+    return(image)
+  }
   presentation <- state
   state <- cache$plots[[presentation$key]]
   if (is.null(state)) return(list(state = NULL))
+  if (presentation$key %in% c("plot1", "plot3", "plot4"))
+    state$coefficientTerms <- rownames(cache$coefficients) %||% cache$plots$plot1$data$term
+  if (presentation$key == "plot4")
+    state <- .gceEntropyState(state, cache$plots$plot3)
   if (!isTRUE(presentation$OLS)) {
     if (presentation$key == "plot1") state$data$ols <- NA_real_
     if (presentation$key == "plot3") state$ols <- NULL
@@ -129,15 +137,119 @@
       )
     })
   }
+  if (!is.null(states$plot4)) {
+    states$plot4$coefficientTerms <- names(stats::coef(best))
+    states$plot4 <- .gceEntropyState(states$plot4, states$plot3)
+  }
   list(states = states, warnings = warnings)
 }
 
+
+# plot3 retains full-data entropy rows that the upstream entropy plot can drop
+# because of NA in an unused ratio. Recover presentation only from that same
+# cached stage; never estimate or calculate entropy here.
+.gceEntropyState <- function(state, source = NULL) {
+  if (is.null(state)) return(NULL)
+  fields <- c("support", "predictor", "nepk")
+  clean <- function(data) {
+    if (!is.data.frame(data) || !all(fields %in% names(data)) ||
+        !is.numeric(data$support) || !is.numeric(data$nepk)) return(NULL)
+    ids <- as.character(data$predictor)
+    data$predictor <- ids
+    data <- data[is.finite(data$support) & data$support > 0 &
+                   !is.na(ids) & nzchar(ids) & is.finite(data$nepk), , drop = FALSE]
+    if (anyDuplicated(data[c("support", "predictor")])) return(NULL)
+    data
+  }
+  available <- clean(state$data)
+  candidate <- if (identical(source$which, 3L)) clean(source$data) else NULL
+  terms <- state$coefficientTerms %||% unique(as.character(state$data$predictor))
+  compatible <- !is.null(candidate) && nrow(candidate) > 0 &&
+    all(candidate$predictor %in% terms) &&
+    (is.null(source$supportLines) || is.null(state$supportLines) ||
+       identical(source$supportLines, state$supportLines))
+  if (compatible && !is.null(available) && nrow(available)) {
+    overlap <- merge(available[fields], candidate[fields],
+                     by = c("support", "predictor"), suffixes = c(".old", ".new"))
+    compatible <- nrow(overlap) == nrow(available) &&
+      all(abs(overlap$nepk.old - overlap$nepk.new) <= 1e-12)
+  }
+  if (compatible) {
+    state$data <- candidate
+    state$entropyComplete <- TRUE
+    state$entropyNotice <- NULL
+  } else {
+    state$data <- available %||% data.frame(support = numeric(), predictor = character(), nepk = numeric())
+    if (!isTRUE(state$entropyComplete))
+      state$entropyNotice <- paste(
+        "Complete entropy trajectories are unavailable in this saved state.",
+        "Only available observations are shown; missing values have not been estimated.")
+  }
+  state
+}
+
+# Wrap coefficient legends within the existing image width.
+.gceCoefficientLegend <- function(terms) {
+  labels <- .gceCoefficientLabels(terms)
+  if (!length(labels)) return(list(labels = labels, columns = 1L))
+  columns <- max(1L, min(length(labels),
+    max(ceiling(length(labels) / 5), floor(58 / (max(nchar(labels)) + 7)))))
+  width <- max(8L, floor(58 / columns) - 7L)
+  wrap <- function(label) {
+    words <- strsplit(label, " ", fixed = TRUE)[[1L]]
+    words <- unlist(lapply(words, function(word) {
+      starts <- seq.int(1L, max(1L, nchar(word)), by = width)
+      substring(word, starts, starts + width - 1L)
+    }), use.names = FALSE)
+    paste(strwrap(paste(words, collapse = " "), width = width), collapse = "\n")
+  }
+  list(labels = stats::setNames(vapply(labels, wrap, character(1)), names(labels)),
+       columns = as.integer(columns),
+       textSize = if (length(labels) > 5L || max(nchar(labels)) > 28L) 8 else NULL)
+}
+
+.gceEntropyLegend <- function(terms) .gceCoefficientLegend(terms)
+
+# Complete internal identifiers define presentation; never use displayed labels as keys.
+.gceCoefficientLabels <- function(terms) {
+  terms <- unique(as.character(terms))
+  labels <- sub("^`([^`]*)`", "\\1", terms)
+  stats::setNames(make.unique(labels, sep = " [coefficient] "), terms)
+}
+
 .gceTermColours <- function(terms, theme) {
-  terms <- sort(unique(as.character(terms)))
-  colours <- theme$color
+  terms <- unique(as.character(terms))
+  # theme$color is the foreground pair, not jamovi's categorical palette.
+  colours <- if (!is.null(theme$palette))
+    jmvcore::colorPalette(max(6L, length(terms)), theme$palette, "color") else theme$color
   if (is.null(colours) || !length(colours))
-    colours <- grDevices::hcl.colors(length(terms), 'Dark 3')
+    colours <- jmvcore::colorPalette(max(6L, length(terms)), "jmv", "color")
   stats::setNames(rep_len(colours, length(terms)), terms)
+}
+
+.gceCoefficientTerms <- function(state, terms) {
+  state$coefficientTerms %||% unique(as.character(terms))
+}
+
+.gceLabelTables <- function(results, terms, supportTerms = terms, probabilityTerms = terms) {
+  labels <- .gceCoefficientLabels(unique(c(terms, supportTerms, probabilityTerms)))
+  for (key in c("coefficients", "signalSupports", "signalProbabilities")) {
+    ids <- switch(key, coefficients = terms, signalSupports = supportTerms,
+                  signalProbabilities = probabilityTerms)
+    table <- results[[key]]; keys <- unlist(table$rowKeys)
+    if (length(keys) != length(ids)) next
+    for (i in seq_along(ids))
+      table$setRow(rowKey = keys[i], values = list(term = unname(labels[ids[i]])))
+  }
+}
+
+# GCEstim's selected-point frames retain coefficient identifiers as row names.
+# Read those identities for legacy states too; never guess by sorted position.
+.gceCoefficientOverlay <- function(overlay, terms) {
+  ids <- if ("predictor" %in% names(overlay)) as.character(overlay$predictor) else rownames(overlay)
+  if (length(ids) == nrow(overlay) && !anyDuplicated(ids) && all(ids %in% terms))
+    overlay$predictor <- ids
+  overlay
 }
 
 .gceEstimateState <- function(fit, ci, level, method, includeOLS = FALSE) {
@@ -171,6 +283,7 @@
   
   list(
     data = data,
+    coefficientTerms = terms,
     caption = sprintf(
       "Estimate (%s%% CI, %s)", 100 * level,
       switch(method, z = "asymptotic", percentile = "bootstrap percentile",
@@ -192,6 +305,8 @@
   for (method in names(methods))
     caption <- sub(paste0("^Estimates \\(", method, " ([0-9.]+)% CI\\)$"),
                    paste0("Estimate (\\1% CI, ", methods[[method]], ")"), caption)
+  terms <- .gceCoefficientTerms(state, data$term)
+  labels <- .gceCoefficientLabels(terms)
   data$term <- factor(data$term, levels = data$term)
   p <- ggplot2::ggplot(data, ggplot2::aes(x = estimate, y = term)) +
     ggplot2::geom_vline(xintercept = 0,
@@ -221,9 +336,10 @@
       size = 2
     )
   }
-  p <- p + ggplot2::scale_colour_manual(values = .gceTermColours(data$term, theme))
   if (!is.null(ggtheme))
     p <- p + ggtheme
+  p <- p + ggplot2::scale_colour_manual(values = .gceTermColours(terms, theme), labels = labels) +
+    ggplot2::scale_y_discrete(labels = labels)
   p <- p + ggplot2::guides(colour = "none") +
     ggplot2::theme(legend.position = "none")
   print(p)
@@ -284,6 +400,7 @@
         c('variable', 'max_x', 'max_y', 'min_x', 'min_y') %in% names(x)
       ), extrema)
   list(data = as.data.frame(p$data),
+       coefficientTerms = rownames(ridgeFit$coef.lambda),
        extrema = if (length(extrema))
          extrema[[1L]]
        else
@@ -325,11 +442,17 @@
         size = 1
       )
   }
-  p <- p + ggplot2::scale_colour_manual(values = .gceTermColours(state$data$variable, theme))
   if (!is.null(ggtheme))
     p <- p + ggtheme
-  p <- p + ggplot2::guides(colour = "none") +
-    ggplot2::theme(legend.position = "none")
+  terms <- .gceCoefficientTerms(state, state$data$variable)
+  legend <- .gceCoefficientLegend(terms)
+  p <- p + ggplot2::scale_colour_manual(values = .gceTermColours(terms, theme),
+    labels = legend$labels) +
+    ggplot2::guides(colour = ggplot2::guide_legend(ncol = legend$columns, byrow = TRUE))
+  if (!is.null(legend$textSize))
+    p <- p + ggplot2::theme(legend.text = ggplot2::element_text(size = legend$textSize))
+  p <- p + ggplot2::theme(legend.position = 'bottom',
+                          legend.title = ggplot2::element_blank())
   print(p)
   TRUE
 }
@@ -378,7 +501,10 @@
     keep <- intersect(c('x', 'y', 'yintercept'), names(data))
     if (!length(keep))
       return(NULL)
-    as.data.frame(data[, keep, drop = FALSE])
+    overlay <- as.data.frame(data[, unique(c(keep, intersect("predictor", names(data)))), drop = FALSE])
+    if (which %in% c(3L, 4L))
+      overlay <- .gceCoefficientOverlay(overlay, unique(as.character(plot$data$predictor)))
+    overlay
   })
   overlays <- Filter(Negate(is.null), overlays)
   
@@ -416,6 +542,7 @@
   ), drop = FALSE]
   list(
     data = plotData,
+    coefficientTerms = if (which %in% c(3L, 4L)) unique(as.character(plot$data$predictor)) else NULL,
     which = as.integer(which),
     overlays = overlays,
     showNEP = isTRUE(showNEP),
@@ -432,7 +559,9 @@
 
 .gceRenderDiagnostic <- function(image, ggtheme, theme) {
   state <- image$state
-  if (is.null(state) || is.null(state$data) || !nrow(state$data))
+  if (identical(state$which, 4L)) state <- .gceEntropyState(state)
+  if (is.null(state) || is.null(state$data) ||
+      (!nrow(state$data) && !identical(state$which, 4L)))
     return(FALSE)
   
   data <- state$data
@@ -477,8 +606,7 @@
         else
           "Normalized Entropy",
         colour = NULL
-      ) +
-      ggplot2::scale_colour_manual(values = .gceTermColours(data$predictor, theme))
+      )
     
     if (which == 3L && !is.null(state$ols)) {
       ols <- state$ols
@@ -608,9 +736,10 @@
   for (overlay in state$overlays) {
     if (all(c("x", "y") %in% names(overlay)) &&
         !which %in% c(2L, 5L)) {
-      if (which %in% c(3L, 4L) &&
-          nrow(overlay) == nlevels(data$predictor)) {
-        overlay$predictor <- levels(data$predictor)
+      if (which %in% c(3L, 4L))
+        overlay <- .gceCoefficientOverlay(overlay, .gceCoefficientTerms(state, data$predictor))
+      if (which %in% c(3L, 4L) && "predictor" %in% names(overlay) &&
+          all(overlay$predictor %in% .gceCoefficientTerms(state, data$predictor))) {
         
         p <- p + ggplot2::geom_point(
           data = overlay,
@@ -668,6 +797,20 @@
   if (!is.null(ggtheme))
     p <- p + ggtheme
   
+  if (which %in% c(3L, 4L)) {
+    terms <- .gceCoefficientTerms(state, unique(as.character(state$data$predictor)))
+    legend <- .gceCoefficientLegend(terms)
+    p <- p + ggplot2::scale_colour_manual(values = .gceTermColours(terms, theme),
+      labels = legend$labels,
+      limits = if (length(terms)) NULL else character())
+    {
+      p <- p + ggplot2::guides(colour = ggplot2::guide_legend(ncol = legend$columns, byrow = TRUE))
+      if (!is.null(legend$textSize))
+        p <- p + ggplot2::theme(legend.text = ggplot2::element_text(size = legend$textSize))
+      if (which == 4L && !is.null(state$entropyNotice))
+        p <- p + ggplot2::labs(caption = paste(strwrap(state$entropyNotice, 65), collapse = "\n"))
+    }
+  }
   if (which %in% 2L:5L)
     p <- p + ggplot2::theme(
       legend.position = "bottom",

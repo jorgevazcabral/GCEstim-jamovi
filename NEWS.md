@@ -1,3 +1,36 @@
+# GCEstimjmv 1.1.0
+
+## New features
+
+- Add standalone Ridge Trace using `GCEstim::ridgetrace()`, automatic geometric or custom penalty grids, configurable cross-validation, minimum-error and module-derived 1-SE lambda selection, and manual selection by grid position.
+- Add model summaries, selected coefficients, coefficient ranges and optional lambda results, plus seven coefficient, prediction-error and stability plots.
+- Reuse evaluated ridge results when changing lambda selection or presentation.
+
+## Improvements
+
+- Use deterministic named coefficient colours from jamovi’s categorical palette across each fitted model’s plots.
+- Format coefficient and factor labels for presentation only, safely disambiguating collisions while retaining complete internal identifiers for joins and filtering.
+- Wrap coefficient-path, TARWGCE ridge and entropy legends adaptively at existing dimensions; retain bottom legends without unnecessary titles.
+- Improve current and legacy saved-state reconstruction and graphical refreshes without unnecessary estimation when compatible cached data are available.
+
+## Bug fixes
+
+- Preserve coefficient identities on selected support-estimate and entropy points in TARWGCE/TASWGCE, including reordered predictors and factors.
+- Restore valid coefficient entropy observations omitted after failed support configurations using verified same-stage cached data; show an explicit notice when legacy recovery data are insufficient.
+- Apply named coefficient scales after jamovi themes to prevent palette overrides.
+- Match standalone Ridge Trace selected-lambda line types to the active rule: minimum error dotted, 1-SE dashed and manual solid. Preserve simultaneous CV references.
+- Preserve coefficient-specific triangular extrema and correct selected estimates.
+- Fix coefficient-path legend clipping for multiple or long coefficient names.
+
+## Compatibility
+
+- Preserve WGCE, TARWGCE and TASWGCE interfaces, numerical results, estimation, cross-validation, optimization and existing caching architecture.
+- Keep the GCEstim dependency pinned to v1.1.0; no GCEstim package changes.
+- Retain informative Ridge Trace errors for unsupported engine configurations, document full-data preprocessing during standardized CV, and exclude MAPE/MASE.
+- The deferred upstream GCEstim support-selection 1-SE concern remains unresolved. Returned entropy-analysis support selections are preserved; this release does not claim to correct that upstream matter.
+
+Windows x64 release asset: `GCEstimjmv_1.1.0.jmo` (jamovi 2.7.41).
+
 # GCEstimjmv 1.0.4
 
 - Cache W-GCE's compact results and confidence intervals, including bootstrap

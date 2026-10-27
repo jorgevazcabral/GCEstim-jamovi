@@ -325,8 +325,8 @@ WGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "seed"),
                 columns=list(
                     list(
-                        `name`="value",
-                        `title`="Value",
+                        `name`="value", 
+                        `title`="Value", 
                         `type`="text"))))
             self$add(jmvcore::Html$new(
                 options=options,
@@ -463,7 +463,7 @@ WGCEResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `type`="number"),
                     list(
                         `name`="se", 
-                        `title`="SE",
+                        `title`="SE", 
                         `type`="number", 
                         `visible`="(bootstrap == 0)"),
                     list(

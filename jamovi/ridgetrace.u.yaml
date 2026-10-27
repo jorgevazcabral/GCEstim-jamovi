@@ -1,0 +1,162 @@
+title: Ridge Trace
+name: RidgeTrace
+jus: '3.0'
+compilerMode: tame
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Dependent Variable
+        children:
+          - type: VariablesListBox
+            name: dep
+            isTarget: true
+            maxItemCount: 1
+            suggested:
+              - continuous
+            permitted:
+              - numeric
+      - type: TargetLayoutBox
+        label: Covariates
+        children:
+          - type: VariablesListBox
+            name: covs
+            isTarget: true
+            suggested:
+              - continuous
+            permitted:
+              - numeric
+      - type: TargetLayoutBox
+        label: Factors
+        children:
+          - type: VariablesListBox
+            name: factors
+            isTarget: true
+            suggested:
+              - nominal
+            permitted:
+              - factor
+  - type: CheckBox
+    name: intercept
+  - type: CheckBox
+    name: standardize
+  - type: CheckBox
+    name: penalizeIntercept
+    enable: (intercept && !standardize)
+  - type: CheckBox
+    name: run
+  - type: CollapseBox
+    label: Ridge Penalty
+    collapsed: false
+    children:
+      - type: CheckBox
+        name: customGrid
+      - type: TextBox
+        name: lambdaMin
+        format: number
+        enable: (!customGrid)
+      - type: TextBox
+        name: lambdaMax
+        format: number
+        enable: (!customGrid)
+      - type: TextBox
+        name: lambdaN
+        format: number
+        enable: (!customGrid)
+      - type: TextBox
+        name: lambdaValues
+        format: string
+        width: largest
+        enable: (customGrid)
+  - type: CollapseBox
+    label: Cross-Validation and Selection
+    collapsed: true
+    children:
+      - type: CheckBox
+        name: cv
+      - type: TextBox
+        name: cvNfolds
+        format: number
+        enable: (cv)
+      - type: TextBox
+        name: seed
+        width: largest
+        format: number
+        enable: (cv)
+      - type: ComboBox
+        name: errorMeasure
+      - type: Label
+        label: Lambda selection rule
+        children:
+          - type: RadioButton
+            name: selectionMinimum
+            optionName: selection
+            optionPart: min
+          - type: RadioButton
+            name: selectionOneSE
+            optionName: selection
+            optionPart: 1se
+            enable: (cv)
+          - type: RadioButton
+            name: selectionManual
+            optionName: selection
+            optionPart: manual
+      - type: TextBox
+        name: manualIndex
+        format: number
+        enable: (selection:manual)
+  - type: CollapseBox
+    label: Tables
+    collapsed: true
+    children:
+      - type: CheckBox
+        name: showLambdaTable
+      - type: TextBox
+        name: tableRows
+        format: number
+        enable: (showLambdaTable)
+  - type: CollapseBox
+    label: Plots
+    collapsed: true
+    children:
+      - type: CheckBox
+        name: plotPaths
+      - type: CheckBox
+        name: plotCV
+        enable: (cv)
+      - type: ComboBox
+        name: plotSample
+      - type: CheckBox
+        name: plotRanges
+      - type: CheckBox
+        name: plotSensitivity
+      - type: CheckBox
+        name: plotFolds
+        enable: (cv)
+      - type: CheckBox
+        name: plotStability
+        enable: (cv)
+  - type: CollapseBox
+    label: Plot Options
+    collapsed: true
+    children:
+      - type: ComboBox
+        name: axisScale
+      - type: CheckBox
+        name: showIntercept
+      - type: CheckBox
+        name: extrema
+      - type: CheckBox
+        name: facet
+      - type: TextBox
+        name: displayTerms
+        format: string
+        width: largest
+      - type: CheckBox
+        name: seBars
+        enable: (cv)
+      - type: CheckBox
+        name: foldMean
+        enable: (cv)

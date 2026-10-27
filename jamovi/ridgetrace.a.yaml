@@ -1,0 +1,177 @@
+---
+name: RidgeTrace
+title: Ridge Trace
+menuGroup: GCEstim
+menuSubgroup: Regression
+menuTitle: Ridge Trace
+version: '1.0.0'
+jas: '1.2'
+
+options:
+  - name: run
+    title: "Fit and update model"
+    type: Bool
+    default: false
+  - name: data
+    type: Data
+  - name: dep
+    title: "Dependent Variable"
+    type: Variable
+  - name: covs
+    title: "Covariates"
+    type: Variables
+  - name: factors
+    title: "Factors"
+    type: Variables
+  - name: intercept
+    title: "Include intercept"
+    type: Bool
+    default: true
+  - name: standardize
+    title: "Standardize variables"
+    type: Bool
+    default: true
+  - name: penalizeIntercept
+    title: "Penalize intercept"
+    type: Bool
+    default: true
+  - name: customGrid
+    title: "Use custom lambda values"
+    type: Bool
+    default: false
+  - name: lambdaMin
+    title: "Minimum lambda"
+    type: Number
+    default: 0.001
+    min: 1e-12
+  - name: lambdaMax
+    title: "Maximum lambda"
+    type: Number
+    default: 1000
+    min: 1e-12
+  - name: lambdaN
+    title: "Number of lambda values"
+    type: Integer
+    default: 100
+    min: 2
+  - name: lambdaValues
+    title: "Custom lambda values (comma separated)"
+    type: String
+    default: "0.001, 0.01, 0.1, 1, 10, 100, 1000"
+  - name: cv
+    title: "Cross-validation"
+    type: Bool
+    default: true
+  - name: cvNfolds
+    title: "Number of folds"
+    type: Integer
+    default: 5
+    min: 2
+  - name: seed
+    title: "Random seed"
+    type: Integer
+    default: 230676
+    min: 1
+  - name: errorMeasure
+    title: "Error measure"
+    type: List
+    default: "RMSE"
+    options:
+      - RMSE
+      - MSE
+      - MAE
+      - sMAPE
+  - name: selection
+    title: "Lambda selection rule"
+    type: List
+    default: "min"
+    options:
+      - name: min
+        title: "Minimum error"
+      - name: 1se
+        title: "1-SE rule"
+      - name: manual
+        title: "Manual evaluated lambda"
+  - name: manualIndex
+    title: "Manual lambda grid position (ascending order)"
+    type: Integer
+    default: 1
+    min: 1
+  - name: showLambdaTable
+    title: "Lambda results table"
+    type: Bool
+    default: false
+  - name: tableRows
+    title: "Maximum lambda rows to display"
+    type: Integer
+    default: 100
+    min: 1
+  - name: axisScale
+    title: "Lambda axis"
+    type: List
+    default: "log"
+    options:
+      - name: log
+        title: "Log10"
+      - name: linear
+        title: "Linear"
+  - name: showIntercept
+    title: "Include intercept in coefficient plots"
+    type: Bool
+    default: true
+  - name: extrema
+    title: "Mark coefficient extrema"
+    type: Bool
+    default: false
+  - name: facet
+    title: "Facet coefficient paths"
+    type: Bool
+    default: false
+  - name: displayTerms
+    title: "Coefficient names to display (comma separated; quote names containing commas)"
+    type: String
+    default: ""
+  - name: seBars
+    title: "Show CV mean +/- 1 SE"
+    type: Bool
+    default: true
+  - name: foldMean
+    title: "Overlay mean fold error"
+    type: Bool
+    default: true
+  - name: plotPaths
+    title: "Ridge coefficient paths"
+    type: Bool
+    default: true
+  - name: plotCV
+    title: "Cross-validation error"
+    type: Bool
+    default: true
+  - name: plotSample
+    title: "In-sample error plot"
+    type: List
+    default: auto
+    options:
+      - name: auto
+        title: Show when CV is disabled
+      - name: show
+        title: Show
+      - name: hide
+        title: Hide
+  - name: plotRanges
+    title: "Coefficient ranges"
+    type: Bool
+    default: false
+  - name: plotSensitivity
+    title: "Local coefficient sensitivity"
+    type: Bool
+    default: false
+  - name: plotFolds
+    title: "Fold-specific CV errors"
+    type: Bool
+    default: false
+  - name: plotStability
+    title: "Coefficient stability across CV folds"
+    type: Bool
+    default: false
+...

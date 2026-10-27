@@ -815,6 +815,10 @@ TARWGCEClass <- R6::R6Class(
         }
       }
       
+      .gceLabelTables(self$results, rownames(coefs),
+        supportTerms = rownames(supportLimits),
+        probabilityTerms = rownames(pMatrix) %||% rownames(coefs))
+
       self$results$text$setContent("<p>Tables completed. Plotting...</p>")
       private$.checkpoint()
       

@@ -1,12 +1,12 @@
 ---
 title: Entropy-Based Linear Regression for jamovi
 name: GCEstimjmv
-version: 1.0.4
+version: 1.1.0
 jms: '1.0'
 authors:
   - Jorge Cabral
 maintainer: Jorge Cabral <jorgecabral@ua.pt>
-date: '2026-10-20'
+date: '2026-10-27'
 type: R
 description: >-
   A jamovi interface for generalized maximum-entropy and generalized
@@ -43,6 +43,13 @@ analyses:
     category: analyses
     menuGroup: GCEstim
     menuTitle: TASW-GCE
+    menuSubgroup: Regression
+  - title: Ridge Trace
+    name: RidgeTrace
+    ns: GCEstimjmv
+    category: analyses
+    menuGroup: GCEstim
+    menuTitle: Ridge Trace
     menuSubgroup: Regression
 usesNative: true
 minApp: 1.0.8

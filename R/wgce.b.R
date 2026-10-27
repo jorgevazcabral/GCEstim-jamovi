@@ -513,6 +513,10 @@ WGCEClass <- R6::R6Class(
         }
       }
 
+      .gceLabelTables(self$results, rownames(coefs),
+        supportTerms = coefNames,
+        probabilityTerms = rownames(pMatrix) %||% rownames(coefs))
+
       if (!useCachedFit) {
         self$results$fitCache$setState(list(
           version = 4L, fit = fit, ci = as.matrix(ci),

@@ -1,0 +1,432 @@
+---
+name: RidgeTrace
+title: Ridge Trace
+jrs: '1.1'
+refs:
+  - GCEstim
+items:
+  - name: fitCache
+    title: Fitted ridge cache
+    type: Table
+    visible: false
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - standardize
+      - penalizeIntercept
+      - customGrid
+      - lambdaValues
+      - lambdaMin
+      - lambdaMax
+      - lambdaN
+      - cv
+      - cvNfolds
+      - seed
+      - errorMeasure
+    columns:
+      - name: value
+        title: "Value"
+        type: text
+  - name: text
+    title: Status
+    type: Html
+  - name: modelSummary
+    title: Model Summary
+    type: Table
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - standardize
+      - penalizeIntercept
+      - customGrid
+      - lambdaValues
+      - lambdaMin
+      - lambdaMax
+      - lambdaN
+      - cv
+      - cvNfolds
+      - seed
+      - errorMeasure
+      - selection
+      - manualIndex
+    columns:
+      - name: measure
+        title: "Measure"
+        type: text
+      - name: value
+        title: "Value"
+        type: text
+  - name: coefficients
+    title: Coefficients at Selected Lambda
+    type: Table
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - standardize
+      - penalizeIntercept
+      - customGrid
+      - lambdaValues
+      - lambdaMin
+      - lambdaMax
+      - lambdaN
+      - cv
+      - cvNfolds
+      - seed
+      - errorMeasure
+      - selection
+      - manualIndex
+    columns:
+      - name: term
+        title: "Coefficient"
+        type: text
+      - name: estimate
+        title: "Estimate"
+        type: number
+  - name: coefficientRanges
+    title: Coefficient Ranges over Evaluated Lambda Grid
+    type: Table
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - standardize
+      - penalizeIntercept
+      - customGrid
+      - lambdaValues
+      - lambdaMin
+      - lambdaMax
+      - lambdaN
+      - cv
+      - cvNfolds
+      - seed
+      - errorMeasure
+      - selection
+      - manualIndex
+    columns:
+      - name: term
+        title: "Coefficient"
+        type: text
+      - name: minimum
+        title: "Minimum"
+        type: number
+      - name: maximum
+        title: "Maximum"
+        type: number
+      - name: maxAbs
+        title: "Maximum absolute"
+        type: number
+      - name: selected
+        title: "Selected estimate"
+        type: number
+  - name: lambdaResults
+    title: Lambda Results
+    type: Table
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - standardize
+      - penalizeIntercept
+      - customGrid
+      - lambdaValues
+      - lambdaMin
+      - lambdaMax
+      - lambdaN
+      - cv
+      - cvNfolds
+      - seed
+      - errorMeasure
+      - selection
+      - manualIndex
+      - showLambdaTable
+      - tableRows
+    columns:
+      - name: position
+        title: Grid position
+        type: integer
+      - name: lambda
+        title: "Lambda"
+        type: number
+      - name: sample
+        title: "In-sample error"
+        type: number
+      - name: cvMean
+        title: "Mean CV error"
+        type: number
+      - name: cvSE
+        title: "CV SE"
+        type: number
+      - name: selected
+        title: "Selected"
+        type: text
+      - name: minimum
+        title: "Minimum error"
+        type: text
+      - name: oneSE
+        title: "1-SE"
+        type: text
+    visible: (showLambdaTable)
+  - name: plotPaths
+    title: Ridge coefficient paths
+    type: Image
+    width: 560
+    height: 400
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - standardize
+      - penalizeIntercept
+      - customGrid
+      - lambdaValues
+      - lambdaMin
+      - lambdaMax
+      - lambdaN
+      - cv
+      - cvNfolds
+      - seed
+      - errorMeasure
+      - selection
+      - manualIndex
+      - axisScale
+      - showIntercept
+      - extrema
+      - facet
+      - displayTerms
+      - seBars
+      - foldMean
+      - plotPaths
+    renderFun: .plotPaths
+    visible: (plotPaths)
+  - name: plotCV
+    title: Cross-validation error
+    type: Image
+    width: 560
+    height: 400
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - standardize
+      - penalizeIntercept
+      - customGrid
+      - lambdaValues
+      - lambdaMin
+      - lambdaMax
+      - lambdaN
+      - cv
+      - cvNfolds
+      - seed
+      - errorMeasure
+      - selection
+      - manualIndex
+      - axisScale
+      - showIntercept
+      - extrema
+      - facet
+      - displayTerms
+      - seBars
+      - foldMean
+      - plotCV
+    renderFun: .plotCV
+    visible: (plotCV && cv)
+  - name: plotSample
+    title: In-sample error
+    type: Image
+    width: 560
+    height: 400
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - standardize
+      - penalizeIntercept
+      - customGrid
+      - lambdaValues
+      - lambdaMin
+      - lambdaMax
+      - lambdaN
+      - cv
+      - cvNfolds
+      - seed
+      - errorMeasure
+      - selection
+      - manualIndex
+      - axisScale
+      - showIntercept
+      - extrema
+      - facet
+      - displayTerms
+      - seBars
+      - foldMean
+      - plotSample
+    renderFun: .plotSample
+    visible: (plotSample:show || (plotSample:auto && !cv))
+  - name: plotRanges
+    title: Coefficient ranges
+    type: Image
+    width: 560
+    height: 400
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - standardize
+      - penalizeIntercept
+      - customGrid
+      - lambdaValues
+      - lambdaMin
+      - lambdaMax
+      - lambdaN
+      - cv
+      - cvNfolds
+      - seed
+      - errorMeasure
+      - selection
+      - manualIndex
+      - axisScale
+      - showIntercept
+      - extrema
+      - facet
+      - displayTerms
+      - seBars
+      - foldMean
+      - plotRanges
+    renderFun: .plotRanges
+    visible: (plotRanges)
+  - name: plotSensitivity
+    title: Local coefficient sensitivity
+    type: Image
+    width: 560
+    height: 400
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - standardize
+      - penalizeIntercept
+      - customGrid
+      - lambdaValues
+      - lambdaMin
+      - lambdaMax
+      - lambdaN
+      - cv
+      - cvNfolds
+      - seed
+      - errorMeasure
+      - selection
+      - manualIndex
+      - axisScale
+      - showIntercept
+      - extrema
+      - facet
+      - displayTerms
+      - seBars
+      - foldMean
+      - plotSensitivity
+    renderFun: .plotSensitivity
+    visible: (plotSensitivity)
+  - name: plotFolds
+    title: Fold-specific CV errors
+    type: Image
+    width: 560
+    height: 400
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - standardize
+      - penalizeIntercept
+      - customGrid
+      - lambdaValues
+      - lambdaMin
+      - lambdaMax
+      - lambdaN
+      - cv
+      - cvNfolds
+      - seed
+      - errorMeasure
+      - selection
+      - manualIndex
+      - axisScale
+      - showIntercept
+      - extrema
+      - facet
+      - displayTerms
+      - seBars
+      - foldMean
+      - plotFolds
+    renderFun: .plotFolds
+    visible: (plotFolds && cv)
+  - name: plotStability
+    title: Coefficient stability across CV folds
+    type: Image
+    width: 560
+    height: 400
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - standardize
+      - penalizeIntercept
+      - customGrid
+      - lambdaValues
+      - lambdaMin
+      - lambdaMax
+      - lambdaN
+      - cv
+      - cvNfolds
+      - seed
+      - errorMeasure
+      - selection
+      - manualIndex
+      - axisScale
+      - showIntercept
+      - extrema
+      - facet
+      - displayTerms
+      - seBars
+      - foldMean
+      - plotStability
+    renderFun: .plotStability
+    visible: (plotStability && cv)
+...
