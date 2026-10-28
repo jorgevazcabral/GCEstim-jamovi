@@ -1,0 +1,142 @@
+GCEstimjmv 1.1.1 — LOW audit corrections
+Validation date: 28 October 2026; local jamovi 2.7.41 on Windows.
+
+1. Plot invalidation
+Replaced the seven broad presentation dependency lists with dependencies used
+by each renderer. All existing estimation dependencies remain intact.
+Additional presentation dependencies (besides each plot's own visibility option):
+  Paths: selection, manualIndex, axisScale, showIntercept, extrema, facet,
+         displayTerms.
+  Ranges: selection, manualIndex, showIntercept, displayTerms.
+  Sensitivity/Stability: selection, manualIndex, axisScale, showIntercept,
+                         displayTerms; CV remains an estimation dependency.
+  CV: axisScale, seBars. Its simultaneous minimum/1-SE markers do not depend
+      on the selected rule or manual grid position.
+  Sample: selection, manualIndex, axisScale.
+  Folds: selection, manualIndex, axisScale, foldMean.
+Per-plot saved presentation state contains only relevant options. When the
+numerical cache is reused, unchanged image states are not rebuilt or reset.
+Automated tests exercise actual jmvcore invalidation and backend build counts.
+Actual GUI evidence: changing only CV mean ± 1 SE changed the CV image;
+all six other image paths and bytes remained identical in saved OMV files.
+The complete numerical cache remained identical across that change.
+
+2. Incompatible options
+Standardization uses enable: (intercept). Its stored preference is preserved;
+the effective value passed to GCEstim is FALSE without an intercept. The
+summary says Not applicable. Effective estimation settings are recorded in new
+caches and checked by the backend; released caches remain reusable. Existing
+conservative estimation clearWith declarations are retained.
+Stored 1-SE with CV disabled uses minimum returned in-sample error, without
+rejecting the analysis or attempting 1-SE. An INFO notice explains the
+descriptive fallback and retained preference. Tables, markers and plot state
+use the effective selection. Re-enabling CV restores the stored preference.
+Automated repeated transitions and actual GUI off/on transitions passed.
+CV-enabled mathematical selection rules are unchanged.
+
+3. Numerical lambda presentation
+Model Summary now contains settings and metadata. A compact Selected Lambda
+table uses type: number for minimum evaluated, maximum evaluated and selected
+lambda; the rule is text. Values retain full floating-point precision and use
+jamovi number formatting. The coefficient table title uses approximately three
+significant digits. Lambda Results and selection indicators remain available.
+GUI example: numeric selected value 26.560877829466854 displayed as 26.6,
+matching the concise coefficient-table title, without reducing stored precision.
+
+4. Notices, captions and caveats
+Removed general explanatory captions from all seven Ridge Trace images.
+Retained statistical caveats in table footnotes and full-data preprocessing
+INFO when CV and effective standardization are enabled. Removed repeated
+general not-confidence-interval explanations from INFO. Invalid/unavailable
+numerical result warnings remain. Fold/full-data trajectory identification
+and fold-error/mean-overlay legends remain meaningful.
+Shared entropy presentation no longer places recovery warnings in exported
+plots. TARWGCE and TASWGCE issue a WARNING Notice for genuine recovery
+failures while preserving valid graphics. Recovery calculations are unchanged.
+
+5. Development-only migrations
+Removed Ridge Trace option/image cleanup helpers and their calls, including
+the undocumented options$.removeOption() dependency. No replacement migration
+was necessary. Unknown obsolete options are ignored; unrelated analyses do not
+depend on the removed helpers. Tests restore genuine v1.1.0 numerical and image
+states, prohibit estimator calls and verify reuse, filtering and selection.
+Current saved OMV files were actually saved, closed and reopened in jamovi;
+the reopened Ridge Trace analysis reported reuse of the previous fit.
+
+6. Labels
+All seven plot titles use title case:
+Ridge Coefficient Paths; Cross-Validation Error; In-Sample Error;
+Coefficient Ranges; Local Coefficient Sensitivity; Fold-Specific CV Errors;
+Coefficient Stability Across CV Folds.
+Options now read CV mean ± 1 SE and Manual (grid position).
+YAML contains the literal Unicode ±; R text uses \u00B1 where appropriate.
+NEWS and Ridge Trace documentation describe audit fixes, not new statistics.
+Historical v1.1.0 NEWS is unchanged. Version remains 1.1.1 throughout.
+
+Files changed for LOW work
+R/ridgetrace-state.R; R/ridgetrace.b.R; generated R/ridgetrace.h.R;
+jamovi/ridgetrace.a.yaml; jamovi/ridgetrace.r.yaml; jamovi/ridgetrace.u.yaml;
+R/plot-state.R; R/tarwgce.b.R; R/taswgce.b.R; NEWS.md; RIDGE-TRACE.md;
+tests/testthat/test-ridge-low-audit.R;
+tests/testthat/test-ridgetrace.R; test-ridge-presentation.R;
+test-entropy-presentation.R; three ridge-1.1.0 fixture/provenance files;
+tools/validate-ridge-low.R; build-ridge-low.R; prepare-ridge-low-gui.py;
+verify-ridge-low-gui.py; verify-ridge-low-artifact.py;
+tools/verify-ridge-audit-numerics.R; this report.
+DESCRIPTION and jamovi/0000.yaml already contain the retained MEDIUM release
+version change. Other pre-existing untracked MEDIUM tooling was preserved.
+
+Automated verification
+Full source suite: 2,634 passing assertions (baseline 2,221 plus 413).
+Compiled existing-analysis integration: 117 passing assertions, preserved.
+Zero test failures, warnings, errors or skips; final direct Rscript exit 0.
+Environment startup warnings about unavailable C.UTF-8 and testthat's build
+R version are distinct from test warnings.
+Tests cover plot invalidation/build counts, effective option transitions,
+numeric table types/precision/labels, captions/footnotes, warning notices,
+released state compatibility, unknown obsolete options, cache/no-refit checks,
+and existing MEDIUM colour/filter/error handling regressions.
+Six comparisons against public-release HEAD gave identical complete numerical
+fits, coefficient estimates and lambda selection for supported settings.
+The packaged GCEstim dependency has 18 files byte-identical to v1.1.0.
+Colour checks retain 5/5, 7/7, 10/10 and 15/15 unique colours with stable
+mapping; minimum pairwise Lab distances respectively 39.03, 17.75, 14.62,
+9.36. Colour difference is not a guarantee of accessibility for every viewer.
+
+Actual GUI verification
+Installed through supported jamovi compiler installation procedure.
+Confirmed all four menu entries, bundled seven-coefficient Ridge Trace,
+intercept/standardization off/on and CV/stored-1-SE off/on, notices, numeric
+table, new option labels, all seven saved plot images and title-case labels.
+Visually inspected all seven actual host-rendered saved images.
+Verified SE-only invalidation by comparing GUI-saved image paths and bytes.
+Exported Ridge Coefficient Paths using GUI PDF and PNG export commands;
+both files are nonempty and the PNG was visually inspected. Compiled-package
+checks additionally exported all seven plots to both formats (14 artifacts).
+Saved low-before.omv and low-after-se.omv, closed the latter window and
+reopened it in a fresh jamovi window: previous fit reused, tables and all seven
+plot results present.
+Opened an isolated copy of the released legacy graphical OMV after installation:
+WGCE, TASWGCE and TARWGCE each reported previous fit reused; coefficient tables
+and plot results were available, including a valid entropy trajectory and its
+wrapped coefficient legend. Compiled integration tests provide the broader
+coverage for selected-point identity, references, entropy and cache preservation.
+
+Build and evidence
+GCEstimjmv_1.1.1.jmo: 73,834,610 bytes.
+SHA-256: 4ff116557283b01d60e2d4f74878b6448423ca35ee1e8409f2eb2c6f2c4e9b74
+Embedded package/module version 1.1.1 and all four registrations verified.
+Evidence: build/ridge-low-audit-1.1.1/ contains test-results.csv,
+test-summary.txt, compiled-validation.txt, numerical-preservation.txt,
+gui-invalidation-verification.txt, artifact-preservation.txt, colour-metrics.csv,
+the GUI-saved OMV files and graphical exports.
+git diff --check passes (line-ending normalization advisories only).
+
+Limits and publication status
+The complete dependency matrix is automated; the GUI redraw experiment covers
+one representative SE-only change, not every option combination. GUI export
+commands were exercised for the paths plot; all-seven PNG/PDF coverage is
+compiled-package automation. Genuine recovery failure notices and unexpected
+plot failures are tested automatically, not injected into the live GUI.
+No known failing checks remain. GCEstim and the deferred upstream 1-SE issue
+were not changed. No commit, push, tag, publication or Library submission made.

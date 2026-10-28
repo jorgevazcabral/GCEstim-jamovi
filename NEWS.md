@@ -1,3 +1,18 @@
+# GCEstimjmv 1.1.1
+
+## Audit-driven bug fixes and usability improvements
+
+- Give every standalone Ridge Trace coefficient its own jamovi theme colour, including models with seven or more coefficients. Keep colours consistent across plots, filtering and intercept visibility.
+- Accept displayed coefficient labels and complete internal identifiers in the coefficient filter, including quoted names containing commas. Reject unknown or ambiguous names once, listing valid displayed names before plot construction.
+- Keep requested plots visible after build failures with an error using the plot title. Report unexpected rendering failures instead of silently returning a blank image.
+- Reuse shared coefficient label and palette helpers. Preserve statistical estimation, lambda selection, cross-validation, numerical cache format and all other analyses.
+- Restrict each Ridge Trace plot's invalidation and saved presentation state to the options it reads; retain unaffected images without rebuilding them.
+- Disable standardization without an intercept and pass the effective value FALSE while retaining the stored preference. With CV disabled, retain a stored 1-SE preference but use descriptive minimum in-sample error with an INFO notice.
+- Show minimum, maximum and selected lambda in numeric result cells, with a concise coefficient-table title and full internal precision.
+- Keep statistical explanations in table footnotes and the full-data CV preprocessing notice. Remove general captions from exported Ridge Trace images; move genuine legacy entropy-recovery failures to WARNING notices.
+- Remove development-only Ridge Trace migration helpers and their internal jmvcore API dependency; preserve released numerical caches and saved image compatibility.
+- Use title-case Ridge Trace plot titles, “CV mean ± 1 SE” and “Manual (grid position)” labels consistently.
+
 # GCEstimjmv 1.1.0
 
 ## New features

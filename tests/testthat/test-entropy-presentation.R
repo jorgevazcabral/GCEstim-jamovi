@@ -76,7 +76,7 @@ test_that("legacy entropy recovery rejects mismatched identities, stages and coo
     expect_identical(result$data,s$data)
     expect_match(result$entropyNotice,"Only available observations")
     p <- entropy_plot(result)
-    expect_match(p$plot$labels$caption,"missing values")
+    expect_null(p$plot$labels$caption)
   }
   legacy <- unserialize(serialize(s,NULL))
   image <- GCEstimjmv:::.gcePlotImage(list(state=legacy),list(plots=list(plot3=source)))
@@ -202,7 +202,7 @@ test_that("an empty unrecoverable legacy entropy state renders an honest notice"
   state <- GCEstimjmv:::.gceEntropyState(list(which=4L,data=data.frame(),overlays=list()))
   expect_equal(nrow(state$data),0L)
   p <- entropy_plot(state)
-  expect_match(p$plot$labels$caption,"unavailable")
+  expect_null(p$plot$labels$caption)
 })
 
 test_that("complete same-stage data can recover an entirely truncated entropy trajectory",{

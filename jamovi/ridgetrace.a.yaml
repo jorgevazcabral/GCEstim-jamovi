@@ -91,7 +91,7 @@ options:
       - name: 1se
         title: "1-SE rule"
       - name: manual
-        title: "Manual evaluated lambda"
+        title: "Manual (grid position)"
   - name: manualIndex
     title: "Manual lambda grid position (ascending order)"
     type: Integer
@@ -132,7 +132,7 @@ options:
     type: String
     default: ""
   - name: seBars
-    title: "Show CV mean +/- 1 SE"
+    title: "CV mean ± 1 SE"
     type: Bool
     default: true
   - name: foldMean
@@ -140,15 +140,15 @@ options:
     type: Bool
     default: true
   - name: plotPaths
-    title: "Ridge coefficient paths"
+    title: "Ridge Coefficient Paths"
     type: Bool
     default: true
   - name: plotCV
-    title: "Cross-validation error"
+    title: "Cross-Validation Error"
     type: Bool
     default: true
   - name: plotSample
-    title: "In-sample error plot"
+    title: "In-Sample Error"
     type: List
     default: auto
     options:
@@ -159,19 +159,19 @@ options:
       - name: hide
         title: Hide
   - name: plotRanges
-    title: "Coefficient ranges"
+    title: "Coefficient Ranges"
     type: Bool
     default: false
   - name: plotSensitivity
-    title: "Local coefficient sensitivity"
+    title: "Local Coefficient Sensitivity"
     type: Bool
     default: false
   - name: plotFolds
-    title: "Fold-specific CV errors"
+    title: "Fold-Specific CV Errors"
     type: Bool
     default: false
   - name: plotStability
-    title: "Coefficient stability across CV folds"
+    title: "Coefficient Stability Across CV Folds"
     type: Bool
     default: false
 ...

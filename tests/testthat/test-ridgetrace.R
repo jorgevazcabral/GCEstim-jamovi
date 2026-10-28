@@ -35,7 +35,7 @@ testthat::test_that("ridge tables and orientation agree with GCEstim across mode
     if (o$cv) {
       testthat::expect_equal(s$mean, unname(colMeans(direct$error.lambda.cv)))
       testthat::expect_equal(s$se, unname(apply(direct$error.lambda.cv, 2, sd) / sqrt(3)))
-      testthat::expect_match(a$results[[".method"]]$content, if (o$standardize) "complete dataset" else "Fold-based SE")
+      testthat::expect_identical(a$results[[".method"]]$visible, isTRUE(o$standardize))
     } else {
       testthat::expect_null(f$cvErrors)
       testthat::expect_true(a$results$plotSample$visible)
@@ -65,7 +65,7 @@ testthat::test_that("ridge minimum, 1-SE and manual selection have defined seman
   testthat::expect_equal(one$se[2], sd(c(1,1.4,.6))/sqrt(3))
   testthat::expect_equal(GCEstimjmv:::.gceRTSelection(f, "manual", 100, TRUE)$index, 4L)
   testthat::expect_error(GCEstimjmv:::.gceRTSelection(f, "manual", 2, TRUE), "evaluated")
-  testthat::expect_error(GCEstimjmv:::.gceRTSelection(f, "1se", 1, FALSE), "requires cross-validation")
+  testthat::expect_equal(GCEstimjmv:::.gceRTSelection(f, "1se", 1, FALSE)$index, 1L)
   close <- f; close$lambda <- c(1, 1 + .Machine$double.eps, 2, 3)
   testthat::expect_equal(GCEstimjmv:::.gceRTSelection(close, "manual", close$lambda[2], TRUE)$index, 2L)
   f$cvErrors[1,2] <- Inf
@@ -77,7 +77,7 @@ testthat::test_that("ridge minimum, 1-SE and manual selection have defined seman
 
 testthat::test_that("ridge unsupported settings and unexpected failures are informative", {
   d <- rt_data()
-  testthat::expect_error({ a <- rt_analysis(d, list(intercept = FALSE)); a$run() }, "implementation limitation")
+  testthat::expect_silent({ a <- rt_analysis(d, list(intercept = FALSE)); a$run() })
   testthat::expect_error({ a <- rt_analysis(d, list(covs = "X001")); a$run() }, "implementation limitation")
   testthat::expect_error({ a <- rt_analysis(d, list(cvNfolds = 100)); a$run() }, "folds")
   testthat::local_mocked_bindings(ridgetrace = function(...) stop("test engine failure"), .package = "GCEstim")
@@ -144,12 +144,13 @@ testthat::test_that("all ridge plots render from persisted numerical state", {
   expected <- (b[, -1, drop = FALSE] - b[, -ncol(b), drop = FALSE]) / rep(diff(log10(cache$fit$lambda)), each = nrow(b))
   testthat::expect_equal(p$data$estimate, as.numeric(expected))
   invalid <- rt_analysis(d, list(factors = "X005", displayTerms = "unknown", plotSample = "show"))
-  invalid$results$fitCache$setState(cache); invalid$run()
-  testthat::expect_false(invalid$results$plotPaths$visible)
+  invalid$results$fitCache$setState(cache)
+  testthat::expect_error(invalid$run(), "Unknown coefficient names.*Valid displayed coefficient names")
+  testthat::expect_true(invalid$results$plotPaths$visible)
   testthat::expect_true(invalid$results$plotCV$visible)
   testthat::expect_true(invalid$results$plotSample$visible)
-  testthat::expect_match(invalid$results[[".fitWarning"]]$content, "Unknown coefficient")
-  testthat::expect_equal(invalid$results$coefficients$asDF, a$results$coefficients$asDF)
+  testthat::expect_false(".fitWarning" %in% names(invalid$results))
+  testthat::expect_identical(invalid$results$fitCache$state, cache)
 })
 
 testthat::test_that("ridge nonfinite returned errors preserve usable coefficient results", {
@@ -216,7 +217,7 @@ testthat::test_that("ridge reference styles and extrema match TARW conventions",
   testthat::expect_identical(layer$linetype, c("dotted", "dashed"))
   testthat::expect_true(all(layer$colour == "black"))
   testthat::expect_equal(layer$linewidth, rep(.5, 2))
-  s <- a$results$plotCV$state$selection
+  s <- c(a$results$plotCV$state$selection, a$results$plotPaths$state$selection)
   testthat::expect_equal(layer$xintercept, log10(cache$fit$lambda[c(s$minimum, s$oneSE)]))
   testthat::expect_identical(p$scales$get_scales("linetype")$breaks, c("Minimum error", "1-SE rule"))
   p <- GCEstimjmv:::.gceRTPlot(cache, a$results$plotPaths$state, NULL, list(color = c("blue", "green")))
@@ -233,11 +234,11 @@ testthat::test_that("ridge reference styles and extrema match TARW conventions",
   }
   built <- ggplot2::ggplot_build(p)
   pointIndices <- which(vapply(p$layers, function(x) inherits(x$geom, "GeomPoint"), logical(1)))
-  colours <- GCEstimjmv:::.gceTermColours(rownames(cache$fit$coefficients), list(color = c("blue","green")))
+  colours <- GCEstimjmv:::.gceRTColours(cache$fit, list(color = c("blue","green")))
   for (i in pointIndices) testthat::expect_equal(built$data[[i]]$colour, unname(colours[rownames(cache$fit$coefficients)]))
   ranges <- GCEstimjmv:::.gceRTPlot(cache, a$results$plotRanges$state, NULL, list())
   testthat::expect_equal(ranges$data$estimate, as.numeric(cache$fit$coefficients[, s$index]))
-  testthat::expect_match(ranges$labels$caption, "Points: selected[[:space:]]+coefficients")
+  testthat::expect_null(ranges$labels$caption)
 })
 
 testthat::test_that("ridge registers seven plots with display defaults and no retired controls", {
@@ -271,7 +272,7 @@ testthat::test_that("ridge registers seven plots with display defaults and no re
   }
 })
 
-testthat::test_that("saved obsolete ridge options and images are retired without refitting", {
+testthat::test_that("unknown development options and images are ignored without refitting", {
   a <- rt_analysis(rt_data(), list(plotRanges = TRUE)); a$run()
   cache <- a$results$fitCache$state
   legacyImage <- a$results$plotPaths$state
@@ -294,10 +295,10 @@ testthat::test_that("saved obsolete ridge options and images are retired without
   testthat::expect_true(all(vapply(retired, replay$options$has, logical(1))))
   testthat::local_mocked_bindings(ridgetrace = function(...) stop("Unexpected refit"), .package = "GCEstim")
   replay$run()
-  testthat::expect_false(any(vapply(retired, replay$options$has, logical(1))))
-  testthat::expect_true(all(vapply(replay$options$asProtoBuf()$options, function(x) x$o == 2L, logical(1))))
+  testthat::expect_true(all(vapply(retired, replay$options$has, logical(1))))
+  testthat::expect_true(all(vapply(retired, function(key) isTRUE(replay$options$option(key)$value), logical(1))))
   testthat::expect_false(any(retired %in% names(replay$results)))
-  testthat::expect_null(replay$results$plotPaths$state$options$normalize)
+  testthat::expect_true(replay$results$plotPaths$state$options$normalize)
   testthat::expect_identical(replay$results$fitCache$state, cache)
   testthat::expect_match(replay$results[[".fitTime"]]$content, "Previous fit reused")
   testthat::expect_equal(replay$results$coefficientRanges$asDF$selected,

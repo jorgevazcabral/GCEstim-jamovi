@@ -8,7 +8,7 @@ The registered analyses are **WGCE**, **TARWGCE**, **TASWGCE**, and **RidgeTrace
 
 The analysis appears under GCEstim / Regression / Ridge Trace. Estimation is exclusively GCEstim::ridgetrace(), using the existing pinned GCEstim dependency. GCEstim itself and the existing analyses are unchanged.
 
-Select one numeric dependent variable, numeric covariates and/or factors. Complete cases are used, unused factor levels are dropped, and coefficient names follow the engine's model matrix. An intercept and standardization are enabled initially. Intercept penalization applies only without standardization and when an intercept is present.
+Select one numeric dependent variable, numeric covariates and/or factors. Complete cases are used, unused factor levels are dropped, and coefficient names follow the engine's model matrix. An intercept and standardization are enabled initially. Standardization is disabled and not applicable without an intercept; the engine receives FALSE. Its stored preference is retained for restoration when the intercept is enabled. Intercept penalization applies only without standardization and when an intercept is present.
 
 The default grid contains 100 geometric penalties from 0.001 to 1000. A custom comma-separated vector must contain at least two distinct finite positive values. Custom values are sorted ascending. Matrix columns are aligned by position with the numeric lambda vector; rounded column names are discarded.
 
@@ -20,15 +20,16 @@ For K folds, the CV mean at lambda l is mean(E[,l]); its descriptive standard er
 
 Minimum error selects the smallest evaluated lambda attaining the minimum mean CV error (ascending grid, first tie). Without CV, it selects minimum returned in-sample error and is explicitly labelled descriptive, without claims of optimal predictive performance.
 
-The 1-SE rule selects the largest evaluated lambda with mean CV error no greater than the minimum mean CV error plus the SE at that minimum. The 1-SE rule is calculated by GCEstimjmv using the fold-specific CV errors returned by GCEstim::ridgetrace(). It requires CV. Fold SE bars are not confidence intervals for generalization error.
+The 1-SE rule selects the largest evaluated lambda with mean CV error no greater than the minimum mean CV error plus the SE at that minimum. The 1-SE rule is calculated by GCEstimjmv using the fold-specific CV errors returned by GCEstim::ridgetrace(). It requires CV. If CV is disabled with 1-SE stored, automatic selection uses minimum returned in-sample error, labelled descriptive, with an INFO notice. Re-enabling CV restores the stored 1-SE preference. Fold SE bars are not confidence intervals for generalization error.
 
-Manual selection uses an integer grid position (1 = smallest lambda). The optional Lambda Results table shows these positions. This avoids ambiguity from rounded displayed values and never interpolates coefficients or refits a model. The summary and coefficient table title identify the selected numeric lambda.
+Manual (grid position) uses an integer position (1 = smallest lambda). The optional Lambda Results table shows these positions. This avoids ambiguity from rounded displayed values and never interpolates coefficients or refits a model. Selected Lambda presents minimum, maximum and selected evaluated lambda in numeric cells using jamovi number formatting. The coefficient-table title uses approximately three significant digits; no internal value is rounded.
 
 If no finite automatic selection exists, paths and descriptive grid ranges remain available. Selected estimates are unavailable until a manual position is chosen.
 
 ## Tables
 
 - Model Summary: formula, complete cases, number of predictor columns, intercept and standardization details, grid, CV settings, error measure, selection and GCEstim version.
+- Selected Lambda: numeric minimum, maximum and selected evaluated lambda, with the effective selection rule. The exact floating-point value remains in the numeric cell; the optional grid table is unchanged.
 - Selected Coefficients: original-unit coefficients from the selected engine path column. No SEs, confidence intervals or p-values are invented.
 - Coefficient Ranges: returned minimum, maximum and maximum absolute coefficient plus selected estimate. Ranges describe the evaluated grid, not confidence intervals.
 - Lambda Results (optional): grid position, lambda, returned in-sample error, CV mean/SE and minimum, 1-SE and selected indicators. Ascending-order rows are limited by a display control; the limit never changes estimation or selection.
@@ -37,11 +38,11 @@ If no finite automatic selection exists, paths and descriptive grid ranges remai
 
 Default: coefficient paths and CV mean error. The in-sample plot defaults to automatic display when CV is disabled; its Show/Hide setting can override automatic visibility.
 
-There are seven plots: Coefficient Paths, Coefficient Ranges, Local Coefficient Sensitivity, Cross-Validation Error, In-Sample Error, Fold Error Paths, and Fold-Training Coefficient Stability. Ranges, sensitivity, fold errors and stability are optional. The in-sample plot can also be shown with CV enabled.
+There are seven plots: Ridge Coefficient Paths, Coefficient Ranges, Local Coefficient Sensitivity, Cross-Validation Error, In-Sample Error, Fold-Specific CV Errors, and Coefficient Stability Across CV Folds. Ranges, sensitivity, fold errors and stability are optional. The in-sample plot can also be shown with CV enabled. The SE control is labelled **CV mean ± 1 SE**.
 
 Coefficient paths support log10 or linear lambda axes, a zero reference, intercept display (enabled by default), extrema markers and facets. Displayed coefficient names can be restricted using a comma-separated list; quote names containing commas with double quotes. Names must match the Coefficients table exactly. This filter affects coefficient plots only.
 
-Coefficient extrema follow TARWGCE: maxima use upward triangles (shape 24), minima downward triangles (shape 25), size 1 and coefficient colours. CV references use black dotted lines for Minimum error and black dashed lines for 1-SE rule. Coefficient Ranges marks the selected estimates as points and labels the selected lambda; the ranges are not confidence intervals.
+Coefficient extrema follow TARWGCE: maxima use upward triangles (shape 24), minima downward triangles (shape 25), size 1 and coefficient colours. CV references use black dotted lines for Minimum error and black dashed lines for 1-SE rule. Coefficient Ranges marks the selected estimates as points. Ranges and other statistical caveats are explained in table footnotes, without general explanatory captions in exported images. Axis labels and trajectory legends remain.
 
 The heatmap and standalone selected-lambda coefficient plot were removed from local v1.0.5 after interface review. Their controls, result objects and renderers are removed; the Selected Coefficients table remains available.
 
@@ -55,7 +56,7 @@ Plots use ggplot2 render callbacks with jamovi themes and colours. Plot data com
 
 When standardization and CV are enabled, a results note explains that the current engine preprocesses the complete dataset before making folds. No fold-specific preprocessing is substituted.
 
-The backend rejects standardized models without an intercept and standardized CV models with an intercept and one expanded predictor column. Messages explicitly identify an implementation limitation rather than a statistical restriction. The second guard also covers a binary factor producing the same matrix shape.
+The backend uses unstandardized estimation when the intercept is absent. It still rejects standardized CV models with an intercept and one expanded predictor column, identifying this engine limitation rather than a statistical restriction. This guard also covers a binary factor producing the same matrix shape.
 
 The existing CV accuracy-call argument reversal affects MAPE and MASE, which are not exposed. The four exposed measures are symmetric under argument reversal. Undefined/nonfinite returned errors generate warnings and unavailable entries rather than replacement statistics.
 
@@ -65,7 +66,11 @@ Unexpected engine errors and incompatible returned dimensions produce coded, inf
 
 The implementation reuses the existing hidden-table state cache pattern. A versioned plain list stores numerical matrices/vectors once, engine version, fit warnings and elapsed time. Image states contain selected indices and presentation settings, not another coefficient path or a ggplot object. CV summaries are derived from the canonical fold-error matrix.
 
-Data/model/grid/CV/error/seed options invalidate the fit cache. Plot settings, table row limits and selection settings do not. Compatible saved state reconstructs tables and plots after reopening without estimation. An incompatible cache version refits once. The current refinement retains cache version 1. Obsolete plotHeatmap, plotSelected and normalize options from older saved analyses are retired using jamovi NONE option-deletion markers (the host retains their names as inactive tombstones, with no active values); obsolete image settings are removed even when a retained plot is hidden. No estimation is needed for this migration. The seed field uses the supported largest UI width; its default, validation and cache dependencies are unchanged. Optional-plot input is validated only when its plot is requested.
+Data/model/grid/CV/error/seed options invalidate the fit cache. Plot settings, table row limits and selection settings do not. Compatible saved state reconstructs tables and plots after reopening without estimation. An incompatible cache version refits once. Numerical cache version 1 remains supported; new fits also record effective estimation settings to guard reuse. Stored standardization and selection preferences are not rewritten. The development-only plotHeatmap, plotSelected and normalize controls were absent from the public release; unknown options are ignored and no internal option-deletion API is used. Genuine released image states remain readable. Coefficient filters are validated once before fitting and plot construction.
+
+Each plot retains only its own presentation dependencies. Extrema and faceting affect paths; coefficient filtering and intercept display affect the four coefficient plots; SE bars affect only CV error; mean overlay affects only fold errors. Axis changes affect lambda-axis plots, not coefficient ranges. Selection changes update selected coefficients and markers; the CV plot's simultaneous minimum and 1-SE references are independent of the active selection rule. Unaffected image states are retained without rebuilding plots.
+
+Legacy entropy-recovery calculations remain unchanged. Genuine recovery failures appear in a WARNING notice alongside the analysis, while available graphical observations are preserved and exported images contain no state-recovery warning caption.
 
 ## Validation
 
@@ -78,7 +83,7 @@ Automated tests cover direct numerical agreement, matrix orientation, tiny custo
 1. Use GCEstimjmv_1.1.0.jmo in a test jamovi session. Confirm WGCE, TARWGCE, TASWGCE and Ridge Trace under Regression. Smoke-test all three existing entropy analyses.
 2. Fit y on X001 and X002 with the bundled dataset, then add X005. Check coefficient names, summary, all tables and plot exports.
 3. Switch minimum/1-SE/manual grid position. Check the selected coefficients and markers change while the result says Previous fit reused.
-4. Toggle every plot, axes, intercept, facets, extrema and display filters. Check legends, captions and larger-model sizing. Invalid display names should skip coefficient plots while preserving tables and performance plots.
+4. Toggle every plot, axes, intercept, facets, extrema and display filters. Check legends, caption-free exports and larger-model sizing. Invalid display names should produce one informative rejection listing valid labels; correcting them should restore results using the numerical cache.
 5. Disable CV: check the automatic in-sample plot, its Show/Hide override and descriptive selection label. Confirm 1-SE is unavailable and an active stale 1-SE selection gives an informative error.
 6. Try custom unsorted, duplicated, zero, negative, nonfinite and malformed grids. Check grid positions and original lambda values; changing grid/model settings must refit.
 7. Try both guarded engine configurations. Check that settings stay unchanged and messages identify implementation limitations.
@@ -137,3 +142,23 @@ Coefficient colours use internal identifiers; display labels remove formula back
 Ridge coefficient ranges, sensitivity and fold-training stability are descriptive, not confidence intervals. Standardized ridge CV currently uses full-data preprocessing before folds; unsupported engine configurations produce informative errors. The deferred upstream GCEstim support-selection 1-SE concern remains unresolved: TARWGCE/TASWGCE preserve the engine’s returned selections. The standalone Ridge Trace 1-SE lambda rule is derived separately from returned fold errors.
 
 This GitHub release is available by sideloading; it does not imply approval or availability of v1.1.0 in the jamovi Library.
+
+# Maintenance update 1.1.1
+
+The audit-driven fixes affect presentation only. Coefficient colours use the full
+jamovi categorical palette and remain stable across the seven plots, filtering
+and intercept visibility. Coefficient labels retain factor-level suffixes and
+collision-safe formatting.
+
+In **Coefficient names to display**, enter the exact names from the Coefficients
+table or complete internal coefficient identifiers, separated by commas. Enclose
+a name containing a comma in double quotes, for example `"income, annual"`.
+Unknown or ambiguous names are rejected once, with the valid displayed names
+listed. Correct the option to resume the analysis using its numerical cache.
+If a displayed label also identifies a different internal coefficient, it is
+ambiguous; use an unambiguous complete internal identifier instead.
+
+Requested plots remain visible when a plot build fails, with an error identified
+by the plot title. Other results remain available for a plot-specific failure.
+Invalid coefficient input uses jamovi's analysis-level rejection mechanism;
+jamovi may show an analysis error until the input is corrected.

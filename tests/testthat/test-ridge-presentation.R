@@ -33,6 +33,7 @@ testthat::test_that("ridge colours, labels, exact values and line types survive 
       state <- unserialize(serialize(b$results[[key]]$state, NULL))
       for (filter in c("", terms[2])) {
         state$options$displayTerms <- filter
+        state$terms <- NULL # exercise legacy-image reconstruction with changed options
         p <- suppressMessages(GCEstimjmv:::.gceRTPlot(cache, state, list(ggplot2::theme_minimal(), ggplot2::scale_colour_manual(values = rev(theme$color))), theme))
         built <- ggplot2::ggplot_build(p)
         if (key %in% c("plotPaths", "plotRanges", "plotSensitivity", "plotStability")) {
@@ -56,7 +57,7 @@ testthat::test_that("ridge colours, labels, exact values and line types survive 
   }
   # CV-disabled automatic and manual selections retain the same conventions.
   for (rule in c("min", "manual")) {
-    state <- a$results$plotPaths$state; state$selection$rule <- rule
+    state <- a$results$plotPaths$state; state$selection$rule <- rule; state$terms <- NULL
     noCV <- cache; noCV$fit$cvErrors <- NULL; noCV$fit$foldCoefficients <- NULL
     p <- GCEstimjmv:::.gceRTPlot(noCV, state, NULL, theme)
     testthat::expect_identical(tail(p$layers, 1)[[1]]$aes_params$linetype, if (rule == "min") "dotted" else "solid")
@@ -70,7 +71,7 @@ testthat::test_that("reported example retains its exact grid position and select
   a <- GCEstimjmv::RidgeTrace(data=d, dep="y", covs=c("X001","X002 (f)","X003","X004"), factors=NULL,
     run=TRUE, plotRanges=TRUE, facet=TRUE)
   f <- a$fitCache$state$fit; s <- a$plotPaths$state$selection
-  testthat::expect_identical(a$plotPaths$state$presentationVersion, 1L)
+  testthat::expect_identical(a$plotPaths$state$presentationVersion, 2L)
   testthat::expect_identical(s$index, 59L)
   testthat::expect_equal(f$lambda[s$index], 3.2745491628777286, tolerance=1e-14)
   expected <- c(-4.045055104986524, .6404993249794027, -13.999103646322222, -12.150484293055118, -4.9108547996093055)

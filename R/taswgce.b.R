@@ -764,6 +764,7 @@ TASWGCEClass <- R6::R6Class(
       }
 
       # Canonical plot data lives once in fitCache. Images retain references.
+      .gceEntropyWarning(self$results, self$options, plotStates)
       for (key in c("plot1", "plot2", "plot3", "plot4", "plot6", "plotCV")) {
         if (isTRUE(self$options[[key]]) && !is.null(plotStates[[key]]))
           self$results[[key]]$setState(list(key = key,

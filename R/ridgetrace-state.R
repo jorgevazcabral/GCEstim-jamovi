@@ -1,23 +1,23 @@
-# Retire only obsolete presentation options; keep the version-1 numerical cache.
-# jmvcore sends NONE tombstones to the host so these options are removed on save.
-.gceRTCleanOptions <- function(options) {
-  for (key in c("plotHeatmap", "plotSelected", "normalize"))
-    if (options$has(key)) options$.removeOption(key)
-}
+.gceRTEffective <- function(options) list(
+  standardize = isTRUE(options$intercept) && isTRUE(options$standardize),
+  selection = if (!isTRUE(options$cv) && options$selection == "1se") "min" else options$selection)
 
-.gceRTCleanImages <- function(results) {
-  allowed <- c("axisScale", "showIntercept", "extrema", "facet", "displayTerms", "seBars", "foldMean")
-  for (key in c("plotPaths", "plotRanges", "plotSensitivity", "plotCV", "plotSample", "plotFolds", "plotStability")) {
-    image <- results[[key]]
-    state <- image$state
-    if (is.list(state$options)) {
-      cleaned <- state$options[intersect(names(state$options), allowed)]
-      if (!identical(cleaned, state$options)) {
-        state$options <- cleaned
-        image$setState(state)
-      }
-    }
-  }
+# Only settings actually read by the selected renderer belong in its state.
+.gceRTPlotOptions <- function(key) switch(key,
+  plotPaths = c("axisScale", "showIntercept", "extrema", "facet", "displayTerms"),
+  plotRanges = c("showIntercept", "displayTerms"),
+  plotSensitivity = , plotStability = c("axisScale", "showIntercept", "displayTerms"),
+  plotCV = c("axisScale", "seBars"),
+  plotSample = "axisScale", plotFolds = c("axisScale", "foldMean"))
+
+.gceRTSettings <- function(options, effective) {
+  keys <- c("dep", "covs", "factors", "intercept", "customGrid", "lambdaValues",
+    "lambdaMin", "lambdaMax", "lambdaN", "cv", "errorMeasure")
+  settings <- stats::setNames(lapply(keys, function(key) options[[key]]), keys)
+  settings$standardize <- effective$standardize
+  settings$penalizeIntercept <- isTRUE(options$intercept) && !effective$standardize && isTRUE(options$penalizeIntercept)
+  if (isTRUE(options$cv)) { settings$cvNfolds <- options$cvNfolds; settings$seed <- options$seed }
+  settings
 }
 
 # Plain numerical state; estimation is exclusively GCEstim::ridgetrace().
@@ -63,6 +63,7 @@
 }
 
 .gceRTSelection <- function(fit, rule, manual, cv) {
+  if (rule == "1se" && !isTRUE(cv)) rule <- "min"
   L <- length(fit$lambda); mean <- se <- rep(NA_real_, L)
   if (isTRUE(cv)) {
     valid <- apply(is.finite(fit$cvErrors), 2L, all)
@@ -82,8 +83,6 @@
   warning <- character()
   if (any(!is.finite(fit$sample)) || (isTRUE(cv) && any(!is.finite(fit$cvErrors))))
     warning <- "Some returned errors are undefined or nonfinite. CV mean/SE requires all folds to be finite; unavailable errors are excluded from automatic selection."
-  if (rule == "1se" && !isTRUE(cv))
-    jmvcore::reject("The 1-SE rule requires cross-validation. Choose Minimum error (in-sample) or Manual evaluated lambda.", code = "one_se_requires_cv")
   selected <- if (rule == "1se") oneSE else minimum
   if (rule == "manual") {
     if (!is.finite(manual) || manual <= 0)
@@ -94,7 +93,7 @@
     selected <- matches
   }
   if (is.na(selected)) warning <- c(warning,
-    "No finite error-based lambda selection is available. Coefficient paths and grid summaries remain available; use Manual evaluated lambda to inspect coefficients.")
+    "No finite error-based lambda selection is available. Coefficient paths and grid summaries remain available; use Manual (grid position) to inspect coefficients.")
   list(index = selected, minimum = minimum, oneSE = oneSE, mean = mean, se = se, warning = warning)
 }
 
@@ -103,16 +102,33 @@
   else table$addRow(rowKey = key, values = values)
 }
 
-.gceRTTerms <- function(fit, showIntercept, text) {
-  terms <- rownames(fit$coefficients)
-  if (!isTRUE(showIntercept)) terms <- setdiff(terms, "(Intercept)")
+.gceRTResolveTerms <- function(terms, text) {
+  labels <- .gceCoefficientLabels(terms)
   if (nzchar(trimws(text))) {
-    wanted <- trimws(scan(text = text, what = character(), sep = ",", quote = '"', quiet = TRUE))
-    unknown <- setdiff(wanted[nzchar(wanted)], rownames(fit$coefficients))
-    if (length(unknown)) stop(paste("Unknown coefficient names:", paste(unknown, collapse = ", ")))
-    terms <- intersect(terms, wanted)
+    invalid <- function(reason) jmvcore::reject(
+      "{reason} Valid displayed coefficient names: {valid}. Use commas between names and double quotes around names containing commas.",
+      code = "invalid_coefficient_names", reason = reason,
+      valid = paste(paste0('"', unname(labels), '"'), collapse = ", "))
+    wanted <- tryCatch(withCallingHandlers(
+      trimws(scan(text = text, what = character(), sep = ",", quote = '"', quiet = TRUE)),
+      warning = function(w) stop(conditionMessage(w))),
+      error = function(e) invalid("Could not read coefficient names."))
+    wanted <- wanted[nzchar(wanted)]
+    resolved <- lapply(wanted, function(name) unique(c(terms[terms == name], names(labels)[labels == name])))
+    unknown <- wanted[lengths(resolved) == 0L]
+    ambiguous <- wanted[lengths(resolved) > 1L]
+    if (length(unknown) || length(ambiguous)) invalid(paste(c(
+      if (length(unknown)) paste0("Unknown coefficient names: ", paste(unknown, collapse = ", "), "."),
+      if (length(ambiguous)) paste0("Ambiguous coefficient names: ", paste(ambiguous, collapse = ", "), ".")), collapse = " "))
+    terms <- intersect(terms, unlist(resolved, use.names = FALSE))
   }
-  if (!length(terms)) stop("No coefficients are selected for this plot.")
+  terms
+}
+
+.gceRTTerms <- function(fit, showIntercept, text) {
+  terms <- .gceRTResolveTerms(rownames(fit$coefficients), text)
+  if (!isTRUE(showIntercept)) terms <- setdiff(terms, "(Intercept)")
+  if (!length(terms)) jmvcore::reject("No coefficients are selected for this plot. Include a predictor or show the intercept.", code = "empty_coefficient_selection")
   terms
 }
 
@@ -126,22 +142,12 @@
 .gceRTColours <- function(fit, theme) {
   terms <- unique(rownames(fit$coefficients))
   terms <- terms[order(sub("^`([^`]*)`", "\\1", terms), terms, method = "radix")]
-  # theme$color contains two foreground colours, not the coefficient palette.
-  palette <- if (!is.null(theme$palette))
-    jmvcore::colorPalette(6L, theme$palette, "color") else theme$color
-  if (is.null(palette) || !length(palette))
-    palette <- jmvcore::colorPalette(6L, "jmv", "color")
-  # Cycle the existing theme palette deterministically for additional coefficients.
-  stats::setNames(rep_len(palette, length(terms)), terms)
+  # Legacy callers may supply only the foreground pair. Never recycle it.
+  if (is.null(theme$palette) && length(theme$color) < length(terms)) theme$palette <- "jmv"
+  .gceTermColours(terms, theme)
 }
 
-.gceRTLabels <- function(terms) {
-  terms <- unique(as.character(terms))
-  labels <- sub("^`([^`]*)`", "\\1", terms)
-  # Disambiguate globally, including names that already resemble a suffix.
-  labels <- make.unique(labels, sep = " [coefficient] ")
-  stats::setNames(labels, terms)
-}
+.gceRTLabels <- function(terms) .gceCoefficientLabels(terms)
 
 .gceRTLineType <- function(rule) {
   switch(rule %||% "min", min = "dotted", `1se` = "dashed", manual = "solid",
@@ -152,15 +158,17 @@
   f <- cache$fit; s <- state$selection; key <- state$key; o <- state$options; lambda <- f$lambda
   coefficientPlot <- key %in% c("plotPaths", "plotRanges", "plotSensitivity", "plotStability")
   if (coefficientPlot) {
-    labels <- .gceRTLabels(rownames(f$coefficients))
-    terms <- .gceRTTerms(f, o$showIntercept, o$displayTerms); d <- .gceRTLong(f, terms)
+    labels <- .gceCoefficientLabels(rownames(f$coefficients))
+    # Older saved images do not yet contain the centrally resolved identifiers.
+    terms <- state$terms %||% .gceRTTerms(f, o$showIntercept, o$displayTerms)
+    d <- .gceRTLong(f, terms)
   }
   if (!is.null(f$cvErrors)) {
     summary <- .gceRTSelection(f, "min", lambda[1L], TRUE)
     s$mean <- summary$mean; s$se <- summary$se
   }
   lambdaAxis <- TRUE
-  selectedLambda <- if (!is.na(s$index)) lambda[s$index] else NA_real_
+  selectedLambda <- if (length(s$index) && !is.na(s$index)) lambda[s$index] else NA_real_
   colour <- (theme$color %||% "#346da4")[[1L]]
   if (key == "plotPaths") {
     p <- ggplot2::ggplot(d, ggplot2::aes(lambda, estimate, colour = term, group = term)) +
@@ -183,14 +191,13 @@
     d <- data.frame(lambda = lambda, error = s$mean, se = s$se)
     p <- ggplot2::ggplot(d, ggplot2::aes(lambda, error)) +
       ggplot2::geom_line(colour = colour, na.rm = TRUE) + ggplot2::geom_point(colour = colour, na.rm = TRUE) +
-      ggplot2::labs(y = paste("Mean CV", cache$measure),
-        caption = if (isTRUE(o$seBars)) "Bars: mean +/- 1 SE across folds; not confidence intervals for generalization error." else NULL)
+      ggplot2::labs(y = paste("Mean CV", cache$measure))
     if (isTRUE(o$seBars)) p <- p + ggplot2::geom_errorbar(ggplot2::aes(ymin = error - se, ymax = error + se), width = 0, na.rm = TRUE)
   } else if (key == "plotSample") {
     d <- data.frame(lambda = lambda, error = replace(f$sample, !is.finite(f$sample), NA_real_))
     p <- ggplot2::ggplot(d, ggplot2::aes(lambda, error)) +
       ggplot2::geom_line(colour = colour, na.rm = TRUE) + ggplot2::geom_point(colour = colour, na.rm = TRUE) +
-      ggplot2::labs(y = paste("In-sample", cache$measure), caption = "In-sample fit does not estimate optimal predictive performance.")
+      ggplot2::labs(y = paste("In-sample", cache$measure))
   } else if (key == "plotRanges") {
     positions <- match(terms, rownames(f$coefficients))
     d <- data.frame(term = factor(terms, levels = rev(terms)),
@@ -201,9 +208,7 @@
     p <- p + ggplot2::geom_segment(
       ggplot2::aes(x = minimum, xend = maximum, yend = term))
     p <- p + ggplot2::geom_point(size = 2, na.rm = TRUE) +
-      ggplot2::labs(x = "Coefficient (original units)", y = NULL, colour = NULL,
-        caption = paste0("Ranges over evaluated grid; not confidence intervals. Points: selected coefficients. ",
-          "Selected lambda: ", if (is.finite(selectedLambda)) format(selectedLambda, digits = 8) else "unavailable")) +
+      ggplot2::labs(x = "Coefficient (original units)", y = NULL, colour = NULL) +
       ggplot2::guides(colour = "none")
     lambdaAxis <- FALSE
   } else if (key == "plotSensitivity") {
@@ -218,8 +223,7 @@
       ggplot2::geom_hline(yintercept = 0, linetype = "dashed", colour = "grey65") +
       ggplot2::geom_line(na.rm = TRUE) + ggplot2::geom_point(na.rm = TRUE) +
       ggplot2::facet_wrap(~term, scales = "free_y", labeller = ggplot2::as_labeller(labels)) +
-      ggplot2::labs(y = "Coefficient change / change in log10(lambda)", colour = NULL,
-        caption = "Finite differences at log-interval midpoints: descriptive and grid-dependent; not significance or an optimal-lambda criterion.")
+      ggplot2::labs(y = "Coefficient change / change in log10(lambda)", colour = NULL)
   } else if (key == "plotFolds") {
     e <- f$cvErrors
     if (is.null(e)) stop("Cross-validation is disabled.")
@@ -227,10 +231,11 @@
     d <- data.frame(lambda = rep(lambda, each = nrow(e)), error = as.numeric(e),
       fold = factor(rep(seq_len(nrow(e)), length(lambda))))
     p <- ggplot2::ggplot(d, ggplot2::aes(lambda, error, group = fold)) +
-      ggplot2::geom_line(colour = colour, alpha = .35, na.rm = TRUE) +
-      ggplot2::labs(y = paste("Fold CV", cache$measure), caption = "Thin lines: held-out fold errors.")
+      ggplot2::geom_line(ggplot2::aes(linetype = "Fold Error"), colour = colour, alpha = .35, na.rm = TRUE) +
+      ggplot2::labs(y = paste("Fold CV", cache$measure), linetype = NULL) +
+      ggplot2::scale_linetype_manual(values = c("Fold Error" = "solid", "Mean Fold Error" = "solid"))
     if (isTRUE(o$foldMean)) p <- p + ggplot2::geom_line(data = data.frame(lambda = lambda, error = s$mean),
-      ggplot2::aes(lambda, error), inherit.aes = FALSE, linewidth = .9, colour = colour, na.rm = TRUE)
+      ggplot2::aes(lambda, error, linetype = "Mean Fold Error"), inherit.aes = FALSE, linewidth = .9, colour = colour, na.rm = TRUE)
   } else if (key == "plotStability") {
     if (is.null(f$foldCoefficients)) stop("Cross-validation is disabled.")
     folds <- do.call(rbind, lapply(seq_along(f$foldCoefficients), function(k) {
@@ -245,8 +250,7 @@
       ggplot2::geom_line(ggplot2::aes(linetype = "Full data"), linewidth = .9) +
       ggplot2::facet_wrap(~term, scales = "free_y", labeller = ggplot2::as_labeller(labels)) +
       ggplot2::scale_linetype_manual(values = c("Fold training" = "dotted", "Full data" = "solid")) +
-      ggplot2::labs(y = "Coefficient (original units)", colour = NULL, linetype = NULL,
-        caption = "Fold-training variation; not bootstrap distributions or coefficient confidence intervals.")
+      ggplot2::labs(y = "Coefficient (original units)", colour = NULL, linetype = NULL)
   } else stop("Unknown ridge plot.")
   if (key == "plotRanges") p <- p + ggplot2::scale_y_discrete(labels = labels)
   if (lambdaAxis && key != "plotCV" && is.finite(selectedLambda)) p <- p + ggplot2::geom_vline(xintercept = selectedLambda, linetype = .gceRTLineType(s$rule), colour = "grey40")
@@ -263,14 +267,19 @@
   if (!is.null(ggtheme)) p <- p + ggtheme
   # jamovi themes include colour scales; install the stable named scale last.
   if (coefficientPlot) p <- p + ggplot2::scale_colour_manual(values = .gceRTColours(f, theme), labels = labels)
-  if (!is.null(p$labels$caption)) p <- p + ggplot2::labs(caption = paste(strwrap(p$labels$caption, width = 80), collapse = "\n"))
   if (coefficientPlot && (key %in% c("plotSensitivity", "plotStability") || (key == "plotPaths" && isTRUE(o$facet))))
     p <- p + ggplot2::guides(colour = "none")
   else if (key == "plotPaths") p <- p + ggplot2::guides(colour = ggplot2::guide_legend(ncol = 3))
-  p + ggplot2::theme(plot.caption = ggplot2::element_text(hjust = 0, size = 8), legend.position = "bottom", legend.box = "vertical")
+  p + ggplot2::theme(legend.position = "bottom", legend.box = "vertical")
 }
 
 .gceRTRender <- function(image, cache, ggtheme, theme) {
   if (is.null(image$state) || is.null(cache$fit)) return(FALSE)
-  tryCatch({ print(.gceRTPlot(cache, image$state, ggtheme, theme)); TRUE }, error = function(e) FALSE)
+  if (!is.null(image$state$error)) stop(image$state$error, call. = FALSE)
+  tryCatch({ print(.gceRTPlot(cache, image$state, ggtheme, theme)); TRUE },
+    error = function(e) {
+      message <- paste0(image$title, ": ", conditionMessage(e))
+      image$setError(message)
+      stop(message, call. = FALSE)
+    })
 }

@@ -1,0 +1,185 @@
+GCEstimjmv v1.1.1 maintenance release review
+Date: 2026-10-28
+Status: implemented, tested, compiled and installed locally; unpublished.
+
+1. ROOT CAUSES AND CORRECTIONS
+
+Duplicate colours: Ridge Trace requested six palette entries and recycled them.
+The Ridge adapter now passes the complete, deterministically sorted internal
+coefficient universe to the existing .gceTermColours() helper. Foreground-only
+legacy theme arguments that are too short fall back to jamovi's categorical
+palette. Scales are applied after the jamovi theme, retaining stable mappings
+across coefficient plots, filtering, intercept hiding and coefficient reordering.
+
+Rejected displayed names: the previous filter compared text only with model
+matrix identifiers, which retain formula backticks. .gceRTResolveTerms() now
+maps both displayed labels and complete internal identifiers to internal keys.
+The shared collision-safe label map retains factor-level suffixes. Matches are
+combined across both namespaces; names identifying multiple coefficients are
+rejected as ambiguous rather than guessed. Errors list valid displayed labels
+and explain the comma/quote convention. Parsing warnings become one rejection.
+Validation occurs after model-matrix construction, before fitting and plots.
+Current image states store resolved terms; old image states retain a fallback.
+
+Missing/blank plots: build failures formerly cleared image state and hid the
+image; rendering failures were swallowed and returned FALSE. Requested images
+now retain state and visibility and receive an image-level error with their
+user-visible title. Unexpected render errors set the image error and propagate
+with that title. Successful later builds reset result status. No per-plot
+coefficient-input warnings are emitted.
+
+Installed jmvcore 2.7.38 was inspected directly: reject() calls stop(createError())
+and stops the analysis run; it is not a result-local rejection API. Invalid
+filters therefore produce one analysis-level rejection, which jamovi displays
+until corrected. This may temporarily leave requested image areas unrendered;
+the backend does not hide them. Unexpected build failures instead use
+ResultsElement$setError(), preserving unaffected results. The catch in
+.gceRTRender() adds result context and rethrows rather than suppressing errors.
+
+2. FILES CHANGED OR ADDED FOR THIS TASK
+
+Runtime: R/ridgetrace-state.R; R/ridgetrace.b.R.
+Version/notes/docs: DESCRIPTION; jamovi/0000.yaml; NEWS.md; RIDGE-TRACE.md;
+AUDIT-v1.1.1.txt.
+Tests: tests/testthat/test-ridge-audit.R;
+tests/testthat/test-ridge-presentation.R; tests/testthat/test-ridgetrace.R.
+Reproducible local tooling: tools/validate-ridge-audit.R;
+tools/verify-ridge-audit-numerics.R; tools/smoke-ridge-audit.R;
+tools/prepare-ridge-audit-gui.py; tools/verify-ridge-audit-saved.py.
+Existing unrelated untracked tools were left untouched.
+
+3. SHARED HELPERS
+
+R/plot-state.R was not changed. Its .gceCoefficientLabels() implementation was
+verified equivalent to the old Ridge implementation, including make.unique()
+collision handling. Production tables and plots now call it directly; the old
+.gceRTLabels() name remains as a thin compatibility adapter. .gceRTColours()
+retains only Ridge ordering/theme adaptation and delegates palette generation
+to .gceTermColours(). No unrelated plot palette was changed.
+
+4. COLOUR VERIFICATION
+
+Actual fitted models and actual jmvcore default theme application passed:
+Coefficients    Unique colours    Minimum CIE Lab distance
+5               5                 39.03267
+7               7                 17.75271
+10              10                14.62373
+15              15                 9.36398
+
+The checks require minimum distance > 5. They also verify stable mapping after
+reordering, filtering and intercept hiding, across paths, ranges, sensitivity
+and stability. These remain jamovi theme colours; larger models have closer
+shades. Seven colours were additionally inspected in the live GUI.
+
+5. COEFFICIENT FILTER VERIFICATION
+
+Passing tests cover displayed labels, internal names, non-syntactic names,
+spaces, factor levels and suffixes, quoted commas, unknown/ambiguous input,
+collision-safe labels and valid-label error messages. Filtering changes neither
+coefficient table calculations nor model-matrix names. Ambiguity across a
+display label and a different internal identifier is intentionally rejected;
+an unambiguous complete identifier can be used instead.
+
+Live GUI checks accepted X005B and the displayed label "Signal, two" in a
+quoted filter. The latter was tested in an isolated copy of the bundled example
+with X002 renamed, using a fresh fit. Its legend displayed Signal, two.
+
+6. ERROR HANDLING VERIFICATION
+
+Automated checks inject unexpected plot-build and render errors, check plot
+visibility, user-visible titles, unaffected results, absent redundant warnings,
+early invalid-filter rejection and successful correction without refitting.
+Build failures retain the failed image's state and error status. Rendering
+failures no longer silently return an empty image.
+
+Live GUI: entering unknown produced an informative analysis error listing all
+seven valid labels. Requested results were not silently hidden by the backend.
+Correcting the input restored plots and showed Previous fit reused.
+Unexpected build/render faults were tested automatically, not injected into
+the installed GUI.
+
+7. AUTOMATED TEST RESULTS
+
+Complete suite: 2,221 passing assertions; zero failures, test warnings or skips.
+The original suite coverage is retained, with old assertions expecting hidden
+plots updated to the approved rejection behaviour. The new audit file contains
+221 assertions; the revised old invalid-filter test adds one rejection check.
+The final direct Rscript full-suite invocation exited 0.
+
+The compiled package additionally passed the 117 existing-analysis integration
+assertions. These are a separate confirmation, not added to the 2,221 total.
+All seven compiled Ridge plots exported successfully to PNG.
+
+Environment-only warnings: unavailable C.UTF-8 locale at R startup; testthat
+was built under R 4.5.3. These are not test failures or testthat warning results.
+An earlier PowerShell-redirection invocation marked stderr as NativeCommandError;
+the subsequent direct full-suite run completed successfully.
+
+8. GUI VERIFICATION EXECUTED
+
+Host: Windows x64, jamovi 2.7.41.
+- Restarted jamovi after supported local installation.
+- Confirmed WGCE, TARWGCE, TASWGCE and Ridge Trace menu entries.
+- Fitted bundled data/dataThesis.csv with four covariates plus X005 factor:
+  75 complete cases and seven coefficients; inspected distinct path colours.
+- Checked a displayed factor label, invalid input and recovery with cache reuse.
+- Checked a displayed name containing both spaces and a comma in a fresh fit.
+- Saved bundled-seven.omv and display-labels.omv locally.
+- Closed/restarted jamovi and reopened bundled-seven.omv; tables, filter and
+  coefficient path remained available with the cached-fit notice.
+- Exported the reopened coefficient path using the GUI to gui-path-export.pdf
+  (19,442 bytes).
+- Reopened the v1.1.0 release-graphics-reopened.omv and inspected WGCE,
+  TASWGCE and TARWGCE tables/plots and their cached-fit reuse notices.
+
+GUI checks did not exhaustively exercise every control or inject unexpected
+runtime faults. All seven plot types were built/rendered/exported automatically;
+the live Ridge GUI inspection focused on coefficient paths and CV error.
+
+9. NUMERICAL AND CACHE PRESERVATION
+
+Six comparisons against original HEAD runtime code confirmed identical complete
+numerical fits, coefficient tables and lambda selections: default CV, no CV,
+unstandardized, factor model, 1-SE and manual grid-position selection.
+Existing tests retain exact example estimates and selected lambda/grid position.
+Persisted numerical cache version remains 1. Numerical cache dependencies,
+estimation, CV, lambda selection and the GCEstim package were not changed.
+Saved-state tests mock the estimator to fail on unnecessary refits and pass.
+
+Actual GUI-saved workbooks were inspected independently: internal filter terms
+are X005B and `Signal, two`, both caches have seven coefficients and version 1,
+and saved path/CV images are nonempty. Their entire numerical fits are identical
+after normalizing only the deliberately renamed coefficient identifier.
+
+10. BUILD AND INSTALLATION
+
+Artifact: GCEstimjmv_1.1.1.jmo (Windows x64).
+Embedded jamovi.yaml, jamovi-full.yaml and R DESCRIPTION versions: 1.1.1.
+All four analyses and compiled UI definitions verified.
+Supported jamovi compiler installer: Module installed successfully.
+Fresh-process compiled-package check loaded build/R4.5.0-x64-win64/GCEstimjmv.
+SHA-256: 513BB31387535D2E619EE51B121639F23EA9A2296C9D032594F4498467D99CB6
+
+Evidence directory: build/ridge-audit-1.1.1/.
+Key receipts: test-results.csv; test-summary.txt; colour-metrics.csv;
+numerical-preservation.txt; archive-verification.txt; compiled-smoke.txt;
+compiled-existing-analyses.txt; gui-saved-state-verification.txt.
+
+Reproduce:
+Rscript --vanilla tools/validate-ridge-audit.R suite
+Rscript --vanilla tools/verify-ridge-audit-numerics.R
+Rscript --vanilla tools/validate-ridge-audit.R build111
+Rscript --vanilla tools/smoke-ridge-audit.R existing
+Rscript --vanilla tools/validate-ridge-audit.R install111
+python tools/verify-ridge-audit-saved.py
+
+11. REMAINING LIMITS AND PUBLICATION STATUS
+
+No known failing automated checks. Optional manual follow-up: inject unexpected
+plot/render faults in the host GUI; visually review high-count palettes under
+additional user themes; exercise every plot's interactive export dialog.
+No macOS/Linux build or GUI validation was performed.
+
+The maintenance build is ready for review. No commit, push, tag, publication or
+jamovi Library submission was made. Historical v1.1.0 NEWS entries are unchanged.
+GCEstim was not modified, and the deferred upstream 1-SE issue was not investigated.

@@ -64,6 +64,42 @@ items:
       - name: value
         title: "Value"
         type: text
+  - name: selectedLambda
+    title: Selected Lambda
+    type: Table
+    clearWith:
+      - data
+      - run
+      - dep
+      - covs
+      - factors
+      - intercept
+      - standardize
+      - penalizeIntercept
+      - customGrid
+      - lambdaValues
+      - lambdaMin
+      - lambdaMax
+      - lambdaN
+      - cv
+      - cvNfolds
+      - seed
+      - errorMeasure
+      - selection
+      - manualIndex
+    columns:
+      - name: minimum
+        title: Minimum Evaluated
+        type: number
+      - name: maximum
+        title: Maximum Evaluated
+        type: number
+      - name: selected
+        title: Selected Lambda
+        type: number
+      - name: rule
+        title: Selection Rule
+        type: text
   - name: coefficients
     title: Coefficients at Selected Lambda
     type: Table
@@ -185,7 +221,7 @@ items:
         type: text
     visible: (showLambdaTable)
   - name: plotPaths
-    title: Ridge coefficient paths
+    title: Ridge Coefficient Paths
     type: Image
     width: 560
     height: 400
@@ -214,13 +250,11 @@ items:
       - extrema
       - facet
       - displayTerms
-      - seBars
-      - foldMean
       - plotPaths
     renderFun: .plotPaths
     visible: (plotPaths)
   - name: plotCV
-    title: Cross-validation error
+    title: Cross-Validation Error
     type: Image
     width: 560
     height: 400
@@ -242,20 +276,13 @@ items:
       - cvNfolds
       - seed
       - errorMeasure
-      - selection
-      - manualIndex
       - axisScale
-      - showIntercept
-      - extrema
-      - facet
-      - displayTerms
       - seBars
-      - foldMean
       - plotCV
     renderFun: .plotCV
     visible: (plotCV && cv)
   - name: plotSample
-    title: In-sample error
+    title: In-Sample Error
     type: Image
     width: 560
     height: 400
@@ -280,17 +307,11 @@ items:
       - selection
       - manualIndex
       - axisScale
-      - showIntercept
-      - extrema
-      - facet
-      - displayTerms
-      - seBars
-      - foldMean
       - plotSample
     renderFun: .plotSample
     visible: (plotSample:show || (plotSample:auto && !cv))
   - name: plotRanges
-    title: Coefficient ranges
+    title: Coefficient Ranges
     type: Image
     width: 560
     height: 400
@@ -314,18 +335,13 @@ items:
       - errorMeasure
       - selection
       - manualIndex
-      - axisScale
       - showIntercept
-      - extrema
-      - facet
       - displayTerms
-      - seBars
-      - foldMean
       - plotRanges
     renderFun: .plotRanges
     visible: (plotRanges)
   - name: plotSensitivity
-    title: Local coefficient sensitivity
+    title: Local Coefficient Sensitivity
     type: Image
     width: 560
     height: 400
@@ -351,16 +367,12 @@ items:
       - manualIndex
       - axisScale
       - showIntercept
-      - extrema
-      - facet
       - displayTerms
-      - seBars
-      - foldMean
       - plotSensitivity
     renderFun: .plotSensitivity
     visible: (plotSensitivity)
   - name: plotFolds
-    title: Fold-specific CV errors
+    title: Fold-Specific CV Errors
     type: Image
     width: 560
     height: 400
@@ -385,17 +397,12 @@ items:
       - selection
       - manualIndex
       - axisScale
-      - showIntercept
-      - extrema
-      - facet
-      - displayTerms
-      - seBars
       - foldMean
       - plotFolds
     renderFun: .plotFolds
     visible: (plotFolds && cv)
   - name: plotStability
-    title: Coefficient stability across CV folds
+    title: Coefficient Stability Across CV Folds
     type: Image
     width: 560
     height: 400
@@ -421,11 +428,7 @@ items:
       - manualIndex
       - axisScale
       - showIntercept
-      - extrema
-      - facet
       - displayTerms
-      - seBars
-      - foldMean
       - plotStability
     renderFun: .plotStability
     visible: (plotStability && cv)

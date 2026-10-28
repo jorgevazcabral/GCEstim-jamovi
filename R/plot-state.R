@@ -81,6 +81,16 @@
   list(state = state)
 }
 
+# Recovery diagnostics belong in results, never in exported graphical images.
+.gceEntropyWarning <- function(results, options, states) {
+  state <- if (isTRUE(options$plot4)) .gceEntropyState(states$plot4, states$plot3) else NULL
+  message <- state$entropyNotice
+  notice <- jmvcore::Notice$new(options = options, name = ".entropyWarning", type = jmvcore::NoticeType$WARNING)
+  notice$setContent(message %||% "")
+  notice$setVisible(!is.null(message) && nzchar(message))
+  results$insert(1, notice)
+}
+
 .gceCompactCVFit <- function(fit) {
   best <- fit$best
   list(
@@ -807,8 +817,6 @@
       p <- p + ggplot2::guides(colour = ggplot2::guide_legend(ncol = legend$columns, byrow = TRUE))
       if (!is.null(legend$textSize))
         p <- p + ggplot2::theme(legend.text = ggplot2::element_text(size = legend$textSize))
-      if (which == 4L && !is.null(state$entropyNotice))
-        p <- p + ggplot2::labs(caption = paste(strwrap(state$entropyNotice, 65), collapse = "\n"))
     }
   }
   if (which %in% 2L:5L)

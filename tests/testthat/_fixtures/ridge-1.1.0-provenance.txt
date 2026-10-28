@@ -1,0 +1,4 @@
+Plain R states extracted without modification from the public v1.1.0 validation workbook.
+build\release-1.1.0\release-ridge.omv
+SHA-256: 620e5bef813e14102d1892793dd5c9700c29fc69679a0f96cb2c1337d0e2b3fa
+Bundled dataThesis example with X002 renamed X002 (f), missing X001 row 40 and X003 row 14.

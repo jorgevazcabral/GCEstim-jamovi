@@ -42,6 +42,7 @@ children:
     name: intercept
   - type: CheckBox
     name: standardize
+    enable: (intercept)
   - type: CheckBox
     name: penalizeIntercept
     enable: (intercept && !standardize)

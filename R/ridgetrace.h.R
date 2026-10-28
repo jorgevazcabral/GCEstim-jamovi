@@ -318,6 +318,7 @@ RidgeTraceResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         fitCache = function() private$.items[["fitCache"]],
         text = function() private$.items[["text"]],
         modelSummary = function() private$.items[["modelSummary"]],
+        selectedLambda = function() private$.items[["selectedLambda"]],
         coefficients = function() private$.items[["coefficients"]],
         coefficientRanges = function() private$.items[["coefficientRanges"]],
         lambdaResults = function() private$.items[["lambdaResults"]],
@@ -404,7 +405,48 @@ RidgeTraceResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `type`="text"))))
             self$add(jmvcore::Table$new(
                 options=options,
-                name="coefficients",
+                name="selectedLambda",
+                title="Selected Lambda",
+                clearWith=list(
+                    "data",
+                    "run",
+                    "dep",
+                    "covs",
+                    "factors",
+                    "intercept",
+                    "standardize",
+                    "penalizeIntercept",
+                    "customGrid",
+                    "lambdaValues",
+                    "lambdaMin",
+                    "lambdaMax",
+                    "lambdaN",
+                    "cv",
+                    "cvNfolds",
+                    "seed",
+                    "errorMeasure",
+                    "selection",
+                    "manualIndex"),
+                columns=list(
+                    list(
+                        `name`="minimum",
+                        `title`="Minimum Evaluated",
+                        `type`="number"),
+                    list(
+                        `name`="maximum",
+                        `title`="Maximum Evaluated",
+                        `type`="number"),
+                    list(
+                        `name`="selected",
+                        `title`="Selected Lambda",
+                        `type`="number"),
+                    list(
+                        `name`="rule",
+                        `title`="Selection Rule",
+                        `type`="text"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+name="coefficients",
                 title="Coefficients at Selected Lambda",
                 clearWith=list(
                     "data",
@@ -543,7 +585,7 @@ RidgeTraceResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plotPaths",
-                title="Ridge coefficient paths",
+                title="Ridge Coefficient Paths",
                 width=560,
                 height=400,
                 clearWith=list(
@@ -571,15 +613,13 @@ RidgeTraceResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "extrema",
                     "facet",
                     "displayTerms",
-                    "seBars",
-                    "foldMean",
                     "plotPaths"),
                 renderFun=".plotPaths",
                 visible="(plotPaths)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plotCV",
-                title="Cross-validation error",
+                title="Cross-Validation Error",
                 width=560,
                 height=400,
                 clearWith=list(
@@ -600,22 +640,15 @@ RidgeTraceResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "cvNfolds",
                     "seed",
                     "errorMeasure",
-                    "selection",
-                    "manualIndex",
                     "axisScale",
-                    "showIntercept",
-                    "extrema",
-                    "facet",
-                    "displayTerms",
                     "seBars",
-                    "foldMean",
                     "plotCV"),
                 renderFun=".plotCV",
                 visible="(plotCV && cv)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plotSample",
-                title="In-sample error",
+                title="In-Sample Error",
                 width=560,
                 height=400,
                 clearWith=list(
@@ -639,19 +672,13 @@ RidgeTraceResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "selection",
                     "manualIndex",
                     "axisScale",
-                    "showIntercept",
-                    "extrema",
-                    "facet",
-                    "displayTerms",
-                    "seBars",
-                    "foldMean",
                     "plotSample"),
                 renderFun=".plotSample",
                 visible="(plotSample:show || (plotSample:auto && !cv))"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plotRanges",
-                title="Coefficient ranges",
+                title="Coefficient Ranges",
                 width=560,
                 height=400,
                 clearWith=list(
@@ -674,20 +701,15 @@ RidgeTraceResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "errorMeasure",
                     "selection",
                     "manualIndex",
-                    "axisScale",
                     "showIntercept",
-                    "extrema",
-                    "facet",
                     "displayTerms",
-                    "seBars",
-                    "foldMean",
                     "plotRanges"),
                 renderFun=".plotRanges",
                 visible="(plotRanges)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plotSensitivity",
-                title="Local coefficient sensitivity",
+                title="Local Coefficient Sensitivity",
                 width=560,
                 height=400,
                 clearWith=list(
@@ -712,18 +734,14 @@ RidgeTraceResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "manualIndex",
                     "axisScale",
                     "showIntercept",
-                    "extrema",
-                    "facet",
                     "displayTerms",
-                    "seBars",
-                    "foldMean",
                     "plotSensitivity"),
                 renderFun=".plotSensitivity",
                 visible="(plotSensitivity)"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plotFolds",
-                title="Fold-specific CV errors",
+                title="Fold-Specific CV Errors",
                 width=560,
                 height=400,
                 clearWith=list(
@@ -747,11 +765,6 @@ RidgeTraceResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "selection",
                     "manualIndex",
                     "axisScale",
-                    "showIntercept",
-                    "extrema",
-                    "facet",
-                    "displayTerms",
-                    "seBars",
                     "foldMean",
                     "plotFolds"),
                 renderFun=".plotFolds",
@@ -759,7 +772,7 @@ RidgeTraceResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plotStability",
-                title="Coefficient stability across CV folds",
+                title="Coefficient Stability Across CV Folds",
                 width=560,
                 height=400,
                 clearWith=list(
@@ -784,11 +797,7 @@ RidgeTraceResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "manualIndex",
                     "axisScale",
                     "showIntercept",
-                    "extrema",
-                    "facet",
                     "displayTerms",
-                    "seBars",
-                    "foldMean",
                     "plotStability"),
                 renderFun=".plotStability",
                 visible="(plotStability && cv)"))}))
@@ -857,6 +866,7 @@ RidgeTraceBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$fitCache} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$modelSummary} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$selectedLambda} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$coefficients} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$coefficientRanges} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$lambdaResults} \tab \tab \tab \tab \tab a table \cr
