@@ -88,10 +88,6 @@ RidgeTraceClass <- R6::R6Class(
         "Lambda grid", "Lambda values", "Cross-validation", "CV folds", "Seed", "Error measure", "Selection rule", "GCEstim version")
       for (i in seq_along(summary)) .gceRTUpsert(self$results$modelSummary, names(summary)[i], list(measure = labels[i], value = as.character(summary[i])))
       .gceRTUpsert(self$results$selectedLambda, "selection", list(minimum = min(f$lambda), maximum = max(f$lambda), selected = selectedLambda, rule = rule))
-      self$results$selectedLambda$setNote(key = "interpretation", note = if (o$cv)
-        "CV mean \u00B1 1 SE describes variation across folds, not confidence intervals for generalization error." else
-        "Minimum in-sample error is descriptive of these observations, not an estimate of optimal predictive performance.", init = TRUE)
-      self$results$coefficients$setNote(key = "descriptive", note = "Coefficient paths, grid-dependent finite-difference sensitivity and fold-training variation are descriptive, not coefficient confidence intervals.", init = TRUE)
       self$results$coefficientRanges$setNote(key = "descriptive", note = "Ranges describe the evaluated lambda grid; they are not confidence intervals.", init = TRUE)
       coefficientLabels <- .gceCoefficientLabels(rownames(f$coefficients))
       for (j in seq_len(nrow(f$coefficients))) {

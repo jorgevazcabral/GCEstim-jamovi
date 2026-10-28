@@ -133,8 +133,10 @@ testthat::test_that("LOW captions are absent and caveats remain in table notes",
   # Source-level footnote checks complement the rendered table APIs.
   source <- paste(readLines(file.path(testthat::test_path(), "../../R/ridgetrace.b.R")), collapse = "\n")
   testthat::expect_match(source, "Ranges describe the evaluated lambda grid; they are not confidence intervals.", fixed = TRUE)
-  testthat::expect_match(source, "grid-dependent finite-difference sensitivity", fixed = TRUE)
-  testthat::expect_match(source, "not an estimate of optimal predictive performance", fixed = TRUE)
+  testthat::expect_false(grepl("selectedLambda$setNote", source, fixed = TRUE))
+  testthat::expect_false(grepl("coefficients$setNote", source, fixed = TRUE))
+  testthat::expect_false(grepl("grid-dependent finite-difference sensitivity", source, fixed = TRUE))
+  testthat::expect_match(source, "CV summaries require all folds to be finite", fixed = TRUE)
 })
 
 testthat::test_that("LOW result and option titles follow the approved labels", {

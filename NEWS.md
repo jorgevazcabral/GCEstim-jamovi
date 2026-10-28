@@ -1,3 +1,8 @@
+# GCEstimjmv 1.1.2
+
+- Removed redundant explanatory notes from the Ridge Trace Selected Lambda and Selected Coefficients tables.
+- No changes to statistical estimation or analysis functionality.
+
 # GCEstimjmv 1.1.1
 
 ## Audit-driven bug fixes and usability improvements
